@@ -8,7 +8,7 @@ CREATE TABLE hotel_chains (
     email VARCHAR(255),
     phone VARCHAR(20)
 );
-
+s
 
 CREATE TABLE hotels (
     hotel_id SERIAL PRIMARY KEY,
