@@ -6,6 +6,9 @@ const cors=require('cors')
 app.use(express.json()); //req.body
 const pool = require('./db');
 
+const router = express.Router();
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
 
 
@@ -14,7 +17,9 @@ const pool = require('./db');
 app.use(cors())
 app.use(express.json());
 
-
+function generateToken(user){
+    
+}
 
 app.post('/api/customer', async (req, res) => {
     try{
@@ -103,8 +108,16 @@ app.post('/api/hotels', async (req, res) => {
 
 //Routes
 
+app.post('/api/register', async (req, res) => {
+    try{
 
+    }
+    catch(error){
+        console.error(error.message)
+    }
+})
 
 app.listen(3000, () => {
     console.log("Server is running on port 3000");
 })
+
