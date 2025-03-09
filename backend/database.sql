@@ -38,9 +38,9 @@ CREATE TABLE rooms (
 CREATE TABLE customers (
     customer_id SERIAL PRIMARY KEY,
     full_name VARCHAR(255) NOT NULL,
+    password TEXT,
     address TEXT,
     id_type VARCHAR(50), -- SSN, SIN, Driving license, etc
-    id_number VARCHAR(255) UNIQUE NOT NULL,
     registration date DATE DEFAULT CURRENT_DATE
 );
 
@@ -49,7 +49,8 @@ CREATE TABLE employees (
     full_name VARCHAR(255) NOT NULL,
     address TEXT,
     ssn_sin VARCHAR(255) UNIQUE NOT NULL,
-    hotel_id INTEGER REFERENCES hotels(hotel_id) --Link employee to a specific hotel
+    hotel_id INTEGER REFERENCES hotels(hotel_id)
+    password VARCHAR(255) NOT NULL --Link employee to a specific hotel
 );
 
 CREATE TABLE roles (

@@ -22,20 +22,62 @@ function generateToken(user){
 }
 
 app.post('/api/customer', async (req, res) => {
-    try{
-        const {name, address, id_type} = req.body;
+    
+    
+   try{
+        const {full_name, address, password,id_type} = req.body;
 
-        if(!name || !address || !id_type){
+         
+        
+        // console.log(full_name);
+        // console.log(address);
+        // console.log(password);
+        // console.log(id_type);
+        
+        if(!full_name || !address || !id_type||!password){
+            
+            
+            
             return res.status(400).json({message: "Name, address and id_type are required"}); //bad request
         }
         const newCustomer = await pool.query(
-            "INSERT INTO customer(name, address, id_type) VALUES($1, $2, $3) RETURNING *",
-            [name, address, id_type] //value to be inserted
+            "INSERT INTO customers(full_name, password, address, id_type) VALUES($1, $2, $3,$4) RETURNING *",
+            [full_name, password,address, id_type] //value to be inserted
         )
-    }catch(error){
+    }catch(error){ 
         console.error(error.message)
     }
-})
+}) 
+
+app.post('/api/employee', async (req, res) => {
+    
+    
+    try{
+         const {full_name, address, password,ssn_sin,hotel_id} = req.body;
+ 
+          
+         
+         console.log(full_name);
+         console.log(address);
+          console.log(password);
+          console.log(ssn_sin);
+
+console.log(hotel_id);
+         
+         if(!full_name || !address || !ssn_sin||!password||!hotel_id){
+        
+             
+             
+             return res.status(400).json({message: "Name, address and hotel id are required"}); //bad request
+         }
+         const newCustomer = await pool.query(
+             "INSERT INTO employees(full_name, address, ssn_sin,hotel_id,password) VALUES($1, $2, $3,$4,$5) RETURNING *",
+             [full_name,address,ssn_sin,hotel_id,password] //value to be inserted
+         )
+     }catch(error){ 
+         console.error(error.message)
+     }
+ }) 
 
 
 app.get('/api/hotel-chains', async (req, res) => {
