@@ -18,7 +18,9 @@ app.use(cors())
 app.use(express.json());
 
 function generateToken(user){
-    
+    return jwt.sing(
+        
+    )
 }
 
 app.post('/api/customer', async (req, res) => {
