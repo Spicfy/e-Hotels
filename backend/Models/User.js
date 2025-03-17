@@ -100,9 +100,14 @@ class User {
 
             const validPassword = await bcrypt.compare.compare(password, user.password);
         }
+        catch(error){
+            throw new Error(error.message);
+        }
+    
     }
 
 
-
-
 }
+
+export default User
+

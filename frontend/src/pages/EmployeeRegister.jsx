@@ -28,6 +28,7 @@ const EmployeeRegister = () => {
         console.log(inputs);
         
        await axios.post("http://localhost:3000/api/employee",inputs)
+       
         
        
       

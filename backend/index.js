@@ -23,6 +23,7 @@ function generateToken(user){
     )
 }
 
+
 app.post('/api/customer', async (req, res) => {
     
     

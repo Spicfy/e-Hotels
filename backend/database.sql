@@ -98,3 +98,31 @@ CREATE TABLE archived_rentings (
 -- Add a manager to hotel relationship
 ALTER TABLE hotels ADD COLUMN manager_id INTEGER REFERENCES employees(employee_id);
 
+--View to see all available rooms
+CREATE VIEW available_rooms AS
+SELECT 
+    h.address AS area,
+    h.name AS hotel_name,
+    r.room_number,
+    r.price,
+    r.capacity,
+    r.sea_view,
+    r.extendable
+FROM hotels h
+JOIN rooms r ON h.hotel_id = r.hotel_id
+LEFT JOIN bookings b 
+    ON r.room_id = b.room_id 
+    AND (
+        (b.status = 'confirmed' OR b.status = 'checked_in') 
+        AND (
+            (b.check_in_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days')
+            OR (b.check_out_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days')
+            OR (
+                b.check_in_date <= CURRENT_DATE 
+                AND b.check_out_date >= CURRENT_DATE + INTERVAL '30 days'
+            )
+        )
+    )
+WHERE 
+    b.booking_id IS NULL; 
+

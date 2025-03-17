@@ -19,7 +19,7 @@ const Register = () => {
       setInputs(prev=>({...prev,[e.target.name]:e.target.value}))
     }
   
-    //const navigate = useNavigate() 
+    
   
     const handleSubmit = async e=>{
       e.preventDefault()
