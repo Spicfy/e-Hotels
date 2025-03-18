@@ -100,29 +100,16 @@ ALTER TABLE hotels ADD COLUMN manager_id INTEGER REFERENCES employees(employee_i
 
 --View to see all available rooms
 CREATE VIEW available_rooms AS
-SELECT 
-    h.address AS area,
+ SELECT h.address AS area,
     h.name AS hotel_name,
-    r.room_number,
+    h.stars AS hotel_category,
+    r.room_id,
     r.price,
     r.capacity,
     r.sea_view,
     r.extendable
-FROM hotels h
-JOIN rooms r ON h.hotel_id = r.hotel_id
-LEFT JOIN bookings b 
-    ON r.room_id = b.room_id 
-    AND (
-        (b.status = 'confirmed' OR b.status = 'checked_in') 
-        AND (
-            (b.check_in_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days')
-            OR (b.check_out_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days')
-            OR (
-                b.check_in_date <= CURRENT_DATE 
-                AND b.check_out_date >= CURRENT_DATE + INTERVAL '30 days'
-            )
-        )
-    )
-WHERE 
-    b.booking_id IS NULL; 
+   FROM hotels h
+     JOIN rooms r ON h.hotel_id = r.hotel_id
+     LEFT JOIN bookings b ON r.room_id = b.room_id AND (b.status::text = 'confirmed'::text OR b.status::text = 'checked_in'::text) AND (b.check_in_date >= CURRENT_DATE AND b.check_in_date <= (CURRENT_DATE + '30 days'::interval) OR b.check_out_date >= CURRENT_DATE AND b.check_out_date <= (CURRENT_DATE + '30 days'::interval) OR b.check_in_date <= CURRENT_DATE AND b.check_out_date >= (CURRENT_DATE + '30 days'::interval))
+  WHERE b.booking_id IS NULL;
 

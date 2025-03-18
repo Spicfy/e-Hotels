@@ -150,6 +150,53 @@ app.post('/api/hotels', async (req, res) => {
         console.error(error.message)
     }
 })
+app.get("/api/available-rooms", async (req, res) => {
+    const { startDate, endDate, capacity, area, hotelChain, category, maxPrice } = req.query;
+    
+    console.log(capacity);
+    
+    let query = "SELECT * FROM available_rooms WHERE 1=1";
+
+
+    if (startDate && endDate) {
+        console.log(startDate);
+        
+        query += ` AND NOT EXISTS (SELECT 1 FROM bookings WHERE available_rooms.room_id = bookings.room_id AND (check_in_date BETWEEN '${startDate}' AND '${endDate}' OR check_out_date BETWEEN '${startDate}' AND '${endDate}'))`;
+        
+    }
+    if (capacity) {
+        query += " AND capacity >="+capacity;
+        
+    }
+    if (area) {
+        query += ` AND area = '${area}'`;
+        
+    }
+    if (hotelChain) {
+        query += ` AND hotel_name = '${hotelChain}'`;
+    
+    }
+    if (category) {
+        query += " AND hotel_category = "+category;
+        
+    }
+    if (maxPrice) {
+        query += " AND price <= "+maxPrice;
+ 
+    }
+    console.log(query);
+    
+    try {
+        
+        const result = await pool.query(query);
+        res.json(result.rows); 
+    } catch (error) {
+        console.log(2); 
+        
+        console.error("Error fetching rooms:", error);
+        res.status(500).send("Server error");
+    }
+});
 
 //Routes
 
