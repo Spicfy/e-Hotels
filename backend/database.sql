@@ -26,7 +26,7 @@ CREATE TABLE rooms (
     price DECIMAL (10, 2) NOT NULL,
 
     amenities TEXT[], 
-    capacity VARCHAR(50),
+    capacity INTEGER,
 
     sea_view BOOLEAN DEFAULT FALSE,
     extendable BOOLEAN DEFAULT FALSE,
@@ -112,4 +112,34 @@ CREATE VIEW available_rooms AS
      JOIN rooms r ON h.hotel_id = r.hotel_id
      LEFT JOIN bookings b ON r.room_id = b.room_id AND (b.status::text = 'confirmed'::text OR b.status::text = 'checked_in'::text) AND (b.check_in_date >= CURRENT_DATE AND b.check_in_date <= (CURRENT_DATE + '30 days'::interval) OR b.check_out_date >= CURRENT_DATE AND b.check_out_date <= (CURRENT_DATE + '30 days'::interval) OR b.check_in_date <= CURRENT_DATE AND b.check_out_date >= (CURRENT_DATE + '30 days'::interval))
   WHERE b.booking_id IS NULL;
+
+CREATE VIEW available_rooms_per_area AS
+SELECT 
+    h.address AS area,
+    COUNT(r.room_id) AS available_rooms_count
+FROM 
+    hotels h
+JOIN 
+    rooms r ON h.hotel_id = r.hotel_id
+LEFT JOIN 
+    bookings b ON r.room_id = b.room_id
+    AND (b.status IN ('confirmed', 'checked_in'))
+    AND (
+        b.check_in_date <= CURRENT_DATE AND b.check_out_date >= CURRENT_DATE
+    )
+WHERE 
+    b.booking_id IS NULL
+GROUP BY 
+    h.address;
+
+CREATE VIEW aggregated_room_capacity_per_hotel AS
+SELECT 
+    h.name AS hotel_name,
+    SUM(r.capacity) AS total_capacity
+FROM 
+    hotels h
+JOIN 
+    rooms r ON h.hotel_id = r.hotel_id
+GROUP BY 
+    h.name;
 
