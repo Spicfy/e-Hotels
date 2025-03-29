@@ -23,6 +23,57 @@ function generateToken(user){
     )
 }
 
+app.put("/api/customer/:id", async (req, res) => {
+    const { id } = req.params;
+  const { full_name, password, address, id_type, registration_date } = req.body;
+
+  try {
+    // Fetch existing customer data
+    const existingCustomer = await pool.query(
+      `SELECT * FROM customers WHERE customer_id = $1`,
+      [id]
+    );
+
+    if (existingCustomer.rows.length === 0) {
+      return res.status(404).json({ error: "Customer not found." });
+    }
+
+    // Get current data and only update if new values are provided
+    const currentCustomer = existingCustomer.rows[0];
+
+    const updatedFullName = full_name || currentCustomer.full_name;
+    const updatedPassword = password || currentCustomer.password;
+    const updatedAddress = address || currentCustomer.address;
+    const updatedIdType = id_type || currentCustomer.id_type;
+
+    // Do NOT update registration_date unless explicitly provided
+    const updateQuery = `
+      UPDATE customers
+      SET full_name = $1,
+          password = $2,
+          address = $3,
+          id_type = $4
+      WHERE customer_id = $5
+      RETURNING *;
+    `;
+
+    const result = await pool.query(updateQuery, [
+      updatedFullName,
+      updatedPassword,
+      updatedAddress,
+      updatedIdType,
+      id,
+    ]);
+
+    res.json({
+      message: "Customer updated successfully!",
+      customer: result.rows[0],
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error updating customer." });
+  }
+  });
 
 app.post('/api/customer', async (req, res) => {
     
@@ -52,6 +103,25 @@ app.post('/api/customer', async (req, res) => {
     }
 }) 
 
+app.delete("/api/customer/:id", async (req, res) => {
+    const { id } = req.params;
+  
+    try {
+      const result = await pool.query(
+        `DELETE FROM customers WHERE customer_id = $1 RETURNING *`,
+        [id]
+      );
+  
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: "Customer not found." });
+      }
+  
+      res.json({ message: "Customer deleted successfully!" });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Error deleting customer." });
+    }
+  });
 app.post('/api/employee', async (req, res) => {
     
     

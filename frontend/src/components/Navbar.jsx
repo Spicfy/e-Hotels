@@ -46,6 +46,11 @@ function Navbar() {
                 Employee Sign up
                 </Link>
               </li>
+              <li className='nav-item'>
+                <Link to='/admin' className='nav-links-mobile' onClick={closeMobileMenu} >
+                Admin Page
+                </Link>
+              </li>
             </ul>
           </div>
         </nav>
