@@ -35,6 +35,7 @@ CREATE TABLE rooms (
 
 );
 
+
 CREATE TABLE customers (
     customer_id SERIAL PRIMARY KEY,
     full_name VARCHAR(255) NOT NULL,
@@ -142,4 +143,38 @@ JOIN
     rooms r ON h.hotel_id = r.hotel_id
 GROUP BY 
     h.name;
+
+
+CREATE OR REPLACE FUNCTION update_hotel_count()
+RETURNS TRIGGER AS $$
+BEGIN UPDATE hotel_chains
+SET num_hotels = num_hotels + 1
+WHERE chain_id = NEW.chin_id;
+
+RETURN NEW;
+END;
+
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER hotel_insert_trigger
+AFTER INSERT ON hotels
+FOR EACH ROW
+EXECUTE FUNCTION update_hotel_count();
+
+CREATE TRIGGER archive_completed_bookings
+AFTER UPDATE ON bookings
+FOR EACH ROW
+WHEN NEW.status = 'checked_out'
+BEGIN
+    INSERT INTO archived_bookings (customer_id, room_id, check_in_date, check_out_date, booking_date, status)
+    VALUES (OLD.customer_id, OLD.room_id, OLD.check_in_date, OLD.check_out_date, OLD.booking_date, OLD.status);
+
+    DELETE FROM bookings WHERE booking_id = OLD.booking_id;
+END;
+
+CREATE INDEX idx_available_rooms ON rooms (hotel_id);
+
+CREATE INDEX idx_booking_dates ON bookings (check_in_date, check_out_date);
+
+CREATE INDEX idx_hotel_chain ON hotels (chain_id);
 
