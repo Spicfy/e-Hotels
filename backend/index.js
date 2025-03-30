@@ -184,9 +184,9 @@ app.post('/api/employee', async (req, res) => {
     // console.log(ssn_sin);
     // console.log(hotel_id);
     // console.log(employee_id);
-    const existingEmployee = await pool.query(
+    const existingEmployee = await pool.query( 
         `SELECT * FROM employees WHERE employee_id = $1`,
-        [employee_id]
+        [employee_id] 
       );
   
       if (existingEmployee.rows.length === 0) {
@@ -234,6 +234,72 @@ app.post('/api/employee', async (req, res) => {
     }
   });
   
+
+  app.post("/api/room", async (req, res) => {
+    try {
+        const { hotel_id, price, amenities, capacity, sea_view, extendable, damages, room_number } = req.body;
+        const amenitiesArray = amenities ? amenities.split(",").map(item => item.trim()) : [];
+      console.log(amenitiesArray);
+        
+        const result = await pool.query(
+            `INSERT INTO rooms (hotel_id, price, amenities, capacity, sea_view, extendable, damages, room_number)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+            [hotel_id, price, amenitiesArray, capacity, sea_view, extendable, damages, room_number]
+        );
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Database error" });
+    } 
+});
+
+app.put("/api/room/:id", async (req, res) => {
+    try {
+        const roomId = req.params.id;
+        const existing = await pool.query("SELECT * FROM rooms WHERE room_id = $1", [roomId]);
+        if (existing.rows.length === 0) {
+            return res.status(404).json({ error: "Room not found" });
+        }
+
+       const { hotel_id, price, amenities, capacity, sea_view, extendable, damages, room_number } = req.body;
+
+        const amenitiesArray = amenities ? amenities.split(",").map(item => item.trim()) : existing.rows[0].amenities;
+        const updatedPrice = price || existing.rows[0].price;
+        const updatedCapacity = capacity || existing.rows[0].capacity;
+        const updatedSeaView = sea_view !== undefined ? sea_view : existing.rows[0].sea_view;
+        const updatedExtendable = extendable !== undefined ? extendable : existing.rows[0].extendable;
+        const updatedDamages = damages || existing.rows[0].damages;
+        const updatedRoomNumber = room_number || existing.rows[0].room_number;
+        const updatedHotelId = hotel_id || existing.rows[0].hotel_id;
+
+        const result = await pool.query(
+            `UPDATE rooms SET hotel_id = $1, price = $2, amenities = $3, capacity = $4,
+            sea_view = $5, extendable = $6, damages = $7, room_number = $8 WHERE room_id = $9 RETURNING *`,
+            [updatedHotelId, updatedPrice, amenitiesArray, updatedCapacity, updatedSeaView, updatedExtendable, updatedDamages, updatedRoomNumber, roomId]
+        );
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Database error" });
+    }
+});
+
+app.delete("/api/room/:id", async (req, res) => {
+    try {
+        const roomId = req.params.id;
+        const result = await pool.query("DELETE FROM rooms WHERE room_id = $1 RETURNING *", [roomId]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "Room not found" });
+        }
+        res.json({ message: "Room deleted successfully", room: result.rows[0] });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Database error" });
+    }
+})
+
+
+
 
 app.get('/api/hotel-chains', async (req, res) => {
     try{

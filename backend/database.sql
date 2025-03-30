@@ -59,7 +59,7 @@ CREATE TABLE roles (
 );
 
 CREATE TABLE employee_roles (
-    employee_id INTEGER REFERENCES employees(employee_id),
+    employee_id INTEGER REFERENCES employees(employee_id) ON DELETE CASCADE,
     role_id INTEGER REFERENCES roles(role_id),
     PRIMARY KEY (employee_id, role_id)
 );
@@ -78,7 +78,7 @@ CREATE TABLE archived_bookings (
     archived_booking_id SERIAL PRIMARY KEY,
     customer_id INTEGER,
     room_id INTEGER,
-    check_in_date DATE,
+    check_in_date DATE, 
     check_out_date DATE,
     booking_date TIMESTAMP,
     status VARCHAR(50)

@@ -12,6 +12,10 @@ const Admin = ()=>{
             <Link to='/employee'> Insert/Update/Delete Employee</Link>
 
             </div>
+            <div>
+            <Link to='/room'> Insert/Update/Delete Rooms</Link>
+
+            </div>
         </div>
         
     )
