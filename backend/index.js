@@ -98,6 +98,8 @@ app.post('/api/customer', async (req, res) => {
             "INSERT INTO customers(full_name, password, address, id_type) VALUES($1, $2, $3,$4) RETURNING *",
             [full_name, password,address, id_type] //value to be inserted
         )
+        res.json({ message: "Customer added successfully!" });
+
     }catch(error){ 
         console.error(error.message)
     }
@@ -135,7 +137,7 @@ app.post('/api/employee', async (req, res) => {
           console.log(password);
           console.log(ssn_sin);
 
-console.log(hotel_id);
+
          
          if(!full_name || !address || !ssn_sin||!password||!hotel_id){
         
@@ -147,11 +149,91 @@ console.log(hotel_id);
              "INSERT INTO employees(full_name, address, ssn_sin,hotel_id,password) VALUES($1, $2, $3,$4,$5) RETURNING *",
              [full_name,address,ssn_sin,hotel_id,password] //value to be inserted
          )
+         res.json({ message: "Employee added successfully!" });
+
      }catch(error){ 
          console.error(error.message)
      }
  }) 
+ app.delete("/api/employee/:id", async (req, res) => {
+    const { id } = req.params;
+  
+    try {
+      const result = await pool.query(
+        `DELETE FROM employees WHERE employee_id = $1 RETURNING *`,
+        [id]
+      );
+  
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: "Employee not found." });
+      }
+  
+      res.json({ message: "Employee deleted successfully!" });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Error deleting Employee." });
+    }
+  });
 
+  app.put('/api/employee/:employee_id', async (req, res) => {
+    const { employee_id } = req.params; // Get employee ID from URL params
+    const { full_name, password, address, ssn_sin, hotel_id } = req.body;
+    // console.log(full_name);
+    // console.log(address);
+    // console.log(password);
+    // console.log(ssn_sin);
+    // console.log(hotel_id);
+    // console.log(employee_id);
+    const existingEmployee = await pool.query(
+        `SELECT * FROM employees WHERE employee_id = $1`,
+        [employee_id]
+      );
+  
+      if (existingEmployee.rows.length === 0) {
+        return res.status(404).json({ error: "Employee not found." });
+      }
+  
+      // Get current data and only update if new values are provided
+      const currentEmployee = existingEmployee.rows[0];
+  
+      const updatedFullName = full_name || currentEmployee.full_name;
+      const updatedPassword = password || currentEmployee.password;
+      const updatedAddress = address || currentEmployee.address;
+      const updatedSSN = ssn_sin || currentEmployee.ssn_sin;
+        const updatedHotelID = hotel_id || currentEmployee.hotel_id;
+    
+    
+    try {
+      // Step 1: Use a nested query to update employee if hotel_id exists
+      const updateQuery = `
+        UPDATE employees
+        SET full_name = $1, password = $2, address = $3, ssn_sin = $4, hotel_id = $5
+        WHERE employee_id = $6
+        AND EXISTS (
+          SELECT 1 FROM hotels WHERE hotel_id = $5
+        )
+        RETURNING *;
+      `;
+      
+      const updateValues = [updatedFullName, updatedPassword, updatedAddress, updatedSSN, updatedHotelID, employee_id];
+      const updateResult = await pool.query(updateQuery, updateValues);
+  
+      if (updateResult.rowCount === 0) {
+        return res.status(400).json({ message: "Hotel not found or Employee not updated." });
+      }
+  
+      // Step 2: Return the updated employee
+      res.json({
+        message: "Employee updated successfully!",
+        employee: updateResult.rows[0],
+      });
+  
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Error updating employee." });
+    }
+  });
+  
 
 app.get('/api/hotel-chains', async (req, res) => {
     try{

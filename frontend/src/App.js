@@ -9,6 +9,7 @@ import EmployeeRegister from './pages/EmployeeRegister';
 import AvailableRooms from './pages/CustomerView';
 import Admin from './pages/Admin';
 import Customer from './pages/Customer';
+import Employee from './pages/Employee';
 function App() {
   return (
     <Router>
@@ -20,6 +21,7 @@ function App() {
         <Route path="/rooms" element={<AvailableRooms/>}/>
         <Route path ="/admin" element={<Admin/>}/>
         <Route path ="/customer" element={<Customer/>}/>
+        <Route path='/employee' element={<Employee/>}/>
       </Routes>
     </Router>
   );
