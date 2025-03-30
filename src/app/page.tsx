@@ -11,11 +11,11 @@ export default function Home() {
         <Hero />
 
         <section className="py-10 px-4">
-          <h2 className="text-2xl font-bold text-center">Recommended Room Type</h2>
+          <h2 className="text-2xl font-bold text-center">Featured Room Types</h2>
           <div className="flex flex-wrap justify-center gap-6 mt-6">
-            <RoomCard title="Luxury Double Bed" description="Comfortable hotel experiment" price={588} imageUrl="/double_bed_rood_1.png" />
-            <RoomCard title="Suite" description="Bussiness Option" price={888} imageUrl="/suite_1.png" />
-            <RoomCard title="Classic King Sized Bed" description="Budget Option" price={388} imageUrl="/king_sized_room_1.png" />
+            <RoomCard title="Luxury Double Bed" description="Comfortable hotel experiment" price={288} imageUrl="/double_bed_rood_1.png" />
+            <RoomCard title="Suite" description="Bussiness Option" price={488} imageUrl="/suite_1.png" />
+            <RoomCard title="Classic King Sized Bed" description="Budget Option" price={188} imageUrl="/king_sized_room_1.png" />
           </div>
         </section>
 
