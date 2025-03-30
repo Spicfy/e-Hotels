@@ -81,7 +81,7 @@ function App() {
   
     return (
       <div style={{ padding: "20px", maxWidth: "500px", margin: "auto" }}>
-        <h2>Manage employee</h2>
+        <h2>Manage Room</h2>
         <input type="number" name="room_id" value={formData.room_id} onChange={handleChange} placeholder="Room ID"  />
 
         <input type="number" name="hotel_id" value={formData.hotel_id} onChange={handleChange} placeholder="Hotel ID" />

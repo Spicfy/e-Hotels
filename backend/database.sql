@@ -49,7 +49,7 @@ CREATE TABLE employees (
     full_name VARCHAR(255) NOT NULL,
     address TEXT,
     ssn_sin VARCHAR(255) UNIQUE NOT NULL,
-    hotel_id INTEGER REFERENCES hotels(hotel_id)
+    hotel_id INTEGER REFERENCES hotels(hotel_id) ON DELETE CASCADE,
     password VARCHAR(255) NOT NULL --Link employee to a specific hotel
 );
 

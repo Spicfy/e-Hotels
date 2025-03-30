@@ -16,6 +16,9 @@ const Admin = ()=>{
             <Link to='/room'> Insert/Update/Delete Rooms</Link>
 
             </div>
+            <div>
+            <Link to='/hotel'> Insert/Update/Delete Hotel</Link>
+            </div>
         </div>
         
     )

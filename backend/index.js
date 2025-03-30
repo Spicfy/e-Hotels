@@ -298,6 +298,77 @@ app.delete("/api/room/:id", async (req, res) => {
     }
 })
 
+app.post('/api/hotel', async (req, res) => {
+    try{ 
+        const {employee_id, chain_id, name, stars, address, contact_email, contact_phone } = req.body;
+        const newHotel = await pool.query(
+            "INSERT INTO hotels(chain_id, name, stars, address, contact_email, contact_phone,manager_id) VALUES($1, $2, $3, $4, $5, $6,$7) RETURNING *",
+            [chain_id, name, stars, address, contact_email, contact_phone,employee_id] //value to be inserted
+        )
+        res.json({ message: "Hotel added successfully!" });
+    }catch(error){
+        console.error(error.message)
+    }
+})    
+
+app.put('/api/hotel/:hotel_id', async (req, res) => {
+    try{
+        const {hotel_id} = req.params;
+        console.log(hotel_id);
+        
+        const {employee_id, chain_id, name, stars, address, contact_email, contact_phone } = req.body;
+        
+        const existingHotel = await pool.query(
+            `SELECT * FROM hotels WHERE hotel_id = $1`,
+            [hotel_id] 
+        )
+        const updatedEmployee_id = employee_id || existingHotel.rows[0].manager_id;
+        const updatedChain_id = chain_id || existingHotel.rows[0].chain_id;
+        const updatedName = name || existingHotel.rows[0].name;
+        const updatedStars = stars || existingHotel.rows[0].stars;
+        const updatedAddress = address || existingHotel.rows[0].address;
+        const updatedContact_email = contact_email || existingHotel.rows[0].contact_email;
+        const updatedContact_phone = contact_phone || existingHotel.rows[0].contact_phone;
+
+        // console.log(updatedEmployee_id);
+        // console.log(updatedChain_id);
+        // console.log(updatedName);
+        // console.log(updatedStars);
+        // console.log(updatedAddress);
+        // console.log(updatedContact_email);
+        // console.log(updatedContact_phone);
+        // console.log(hotel_id);
+        
+        const updateHotel = await pool.query(
+            "UPDATE hotels SET manager_id = $1, chain_id = $2, name = $3, stars = $4, address = $5, contact_email = $6, contact_phone = $7 WHERE hotel_id = $8 RETURNING *",
+            [updatedEmployee_id, updatedChain_id, updatedName, updatedStars, updatedAddress, updatedContact_email, updatedContact_phone, hotel_id]
+        );
+        res.json({
+            message: "Hotel updated successfully!"});
+    }catch(error){
+        console.error(error.message)
+        res.status(500).json({message: "Error updating hotel"})
+    }
+})
+
+app.delete('/api/hotel/:hotel_id', async (req, res) => {
+    try{
+        const {hotel_id} = req.params;
+        
+        const deleteHotel = await pool.query(
+            "DELETE FROM hotels where hotel_id = $1 RETURNING *",
+            [hotel_id]
+        );
+ 
+        if(deleteHotel.rowCount === 0){
+            return res.status(404).json({message: "Hotel not found"});
+        }
+        res.json({message: "Hotel deleted successfully", deletedHotel: deleteHotel.rows[0]});
+    }catch(error){
+        console.error(error.message)
+        res.status(500).json({message: "Error deleting hotel"})
+    }
+})
 
 
 
