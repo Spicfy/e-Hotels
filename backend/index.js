@@ -443,49 +443,69 @@ app.post('/api/hotels', async (req, res) => {
         console.error(error.message)
     }
 })
+// Room searching and sorting
 app.get("/api/available-rooms", async (req, res) => {
-    const { startDate, endDate, capacity, area, hotelChain, category, maxPrice } = req.query;
-    
-    console.log(capacity);
-    
+    const { startDate, endDate, capacity, area, hotelChain, category, maxPrice, sortBy } = req.query;
+    console.log("[Query Params]", req.query);
     let query = "SELECT * FROM available_rooms WHERE 1=1";
 
-
     if (startDate && endDate) {
-        console.log(startDate);
-        
-        query += ` AND NOT EXISTS (SELECT 1 FROM bookings WHERE available_rooms.room_id = bookings.room_id AND (check_in_date BETWEEN '${startDate}' AND '${endDate}' OR check_out_date BETWEEN '${startDate}' AND '${endDate}'))`;
-        
+        query += ` AND NOT EXISTS (
+            SELECT 1 FROM bookings 
+            WHERE available_rooms.room_id = bookings.room_id 
+            AND (
+                check_in_date BETWEEN '${startDate}' AND '${endDate}' 
+                OR check_out_date BETWEEN '${startDate}' AND '${endDate}'
+            )
+        )`;
     }
+
     if (capacity) {
-        query += " AND capacity >="+capacity;
-        
+        query += ` AND capacity >= ${capacity}`;
     }
+
     if (area) {
         query += ` AND area = '${area}'`;
-        
     }
+
     if (hotelChain) {
         query += ` AND hotel_name = '${hotelChain}'`;
-    
     }
+
     if (category) {
-        query += " AND hotel_category = "+category;
-        
+        query += ` AND hotel_category = ${category}`;
     }
+
     if (maxPrice) {
-        query += " AND price <= "+maxPrice;
- 
+        query += ` AND price <= ${maxPrice}`;
     }
-    console.log(query);
-    
+
+    // ✅ 排序逻辑
+    if (sortBy) {
+        switch (sortBy) {
+            case 'price_asc':
+                query += ` ORDER BY price ASC`;
+                break;
+            case 'price_desc':
+                query += ` ORDER BY price DESC`;
+                break;
+            case 'capacity_asc':
+                query += ` ORDER BY capacity ASC`;
+                break;
+            case 'capacity_desc':
+                query += ` ORDER BY capacity DESC`;
+                break;
+            default:
+                break;
+        }
+    }
+
+    console.log("[Room Query]", query);
+
     try {
-        
         const result = await pool.query(query);
-        res.json(result.rows); 
+        res.json(result.rows);
     } catch (error) {
-        console.log(2); 
-        
         console.error("Error fetching rooms:", error);
         res.status(500).send("Server error");
     }
@@ -494,14 +514,14 @@ app.get("/api/available-rooms", async (req, res) => {
 //Routes
 
 app.post('/api/register/customer', async (req, res) => {
-    
-    
 
-    
+
+
+
     try{
         const { full_name, address, password, id_type} = req.body;
-       
-       
+
+
         const customer = await User.createCustomer(full_name, address, password, id_type);
         res.status(201).json({message: 'Customer registered successfully', customer});
 
