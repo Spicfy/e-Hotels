@@ -51,6 +51,11 @@ function Navbar() {
                 Admin Page
                 </Link>
               </li>
+              <li className='nav-item'>
+                <Link to='/totalrooms' className='nav-links-mobile' onClick={closeMobileMenu} >
+                Total rooms by Hotel
+                </Link>
+              </li>
             </ul>
           </div>
         </nav>

@@ -351,6 +351,27 @@ app.put('/api/hotel/:hotel_id', async (req, res) => {
     }
 })
 
+app.get('/api/totalrooms', async (req, res) => {
+    
+    
+    try{
+        const { name } = req.query;
+        
+        const allRooms = await pool.query("SELECT total_capacity FROM aggregated_room_capacity_per_hotel WHERE hotel_name = $1", [name]);
+        if (allRooms.rows.length === 0) {
+            
+            return res.status(404).json({ message: "Hotel not found" });
+        }
+        //console.log(allRooms.rows);
+        
+
+        res.json(allRooms.rows[0]); 
+        
+    }catch(error){
+        console.error(error.message)
+    }
+})
+
 app.delete('/api/hotel/:hotel_id', async (req, res) => {
     try{
         const {hotel_id} = req.params;
