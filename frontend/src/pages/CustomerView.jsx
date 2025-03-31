@@ -26,7 +26,6 @@ const AvailableRooms = () => {
 
     const navigate = useNavigate();
 
-    // Load filters & initial rooms
     useEffect(() => {
         const fetchDropdownsAndRooms = async () => {
             try {
@@ -69,15 +68,17 @@ const AvailableRooms = () => {
 
     const handleBooking = async (room_id) => {
         const user = JSON.parse(localStorage.getItem("user"));
-        if (!user || !user.id || !filters.startDate || !filters.endDate) {
+        const customer_id = user?.id || user?.customer_id;
+
+        if (!customer_id || !filters.startDate || !filters.endDate) {
             alert("Please login and select check-in/check-out dates.");
             return;
         }
 
         try {
             await axios.post("http://localhost:5000/api/bookings", {
-                customer_id: user.id,
-                room_id: room_id,
+                customer_id,
+                room_id,
                 check_in_date: filters.startDate,
                 check_out_date: filters.endDate,
             });
@@ -146,10 +147,18 @@ const AvailableRooms = () => {
                     rooms.map((room) => (
                         <div key={room.room_id} className="room-card">
                             <h3>{room.hotel_name} ({room.area})</h3>
-                            <p><strong>Room Number:</strong> {room.room_number}</p>
-                            <p><strong>Stars:</strong> {room.hotel_category} ⭐</p>
+                            {room.image_url && (
+                                <img
+                                    src={room.image_url}
+                                    alt={`Room ${room.room_number}`}
+                                    className="room-image"
+                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                />
+                            )}
+                            <p><strong>Room Number:</strong> {room.room_number || "N/A"}</p>
                             <p><strong>Price:</strong> ${room.price}</p>
                             <p><strong>Capacity:</strong> {room.capacity} persons</p>
+                            <p><strong>Star Rating:</strong> {room.hotel_category || "N/A"} ⭐</p>
                             <p><strong>Sea View:</strong> {room.sea_view ? "✅" : "❌"}</p>
                             <p><strong>Extendable:</strong> {room.extendable ? "✅" : "❌"}</p>
                             <button className="book-btn" onClick={() => handleBooking(room.room_id)}>📅 Book Now</button>

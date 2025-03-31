@@ -14,9 +14,12 @@ const Room = () => {
         extendable: false,
         damages: "",
         room_number: "",
+        image_url: "",
     });
 
+    const [imageFile, setImageFile] = useState(null);
     const [message, setMessage] = useState("");
+    const [uploadMsg, setUploadMsg] = useState("");
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -24,12 +27,49 @@ const Room = () => {
         setFormData(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
     };
 
-    const handleInsert = async () => {
+    const handleUploadImage = async () => {
+        if (!imageFile) return alert("Please select an image first!");
+
+        const uploadData = new FormData();
+        uploadData.append("image", imageFile);
+
         try {
-            const response = await axios.post("http://localhost:5000/api/room", formData);
-            setMessage(response.data.message || "✅ Room added successfully!");
+            const res = await axios.post("http://localhost:5000/api/upload", uploadData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+            const imageUrl = res.data.url;
+            setFormData(prev => ({ ...prev, image_url: imageUrl }));
+            setUploadMsg("✅ Image uploaded successfully!");
         } catch (error) {
-            setMessage("❌ Error adding room.");
+            console.error("Upload error:", error);
+            setUploadMsg("❌ Failed to upload image.");
+        }
+    };
+
+    const handleInsert = async () => {
+        const form = new FormData();
+
+        // Append text fields
+        Object.keys(formData).forEach(key => {
+            if (key !== "image_url") {
+                form.append(key, formData[key]);
+            }
+        });
+
+        // Append the actual image file
+        if (imageFile) {
+            form.append("image", imageFile);
+        }
+
+        try {
+            const res = await axios.post("http://localhost:5000/api/room", form, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+            setMessage("✅ Room created successfully!");
+            console.log("Created room:", res.data);
+        } catch (error) {
+            console.error("Insert error:", error);
+            setMessage("❌ Failed to create room.");
         }
     };
 
@@ -64,6 +104,14 @@ const Room = () => {
                 <label><input type="checkbox" name="extendable" onChange={handleChange} /> Extendable</label>
                 <input type="text" name="damages" placeholder="Damages" onChange={handleChange} />
                 <input type="text" name="room_number" placeholder="Room Number" onChange={handleChange} />
+
+                {/* Image Upload */}
+                <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files[0])} />
+                <button onClick={handleUploadImage}>📤 Upload Image</button>
+                {uploadMsg && <p className="result-msg">{uploadMsg}</p>}
+                {formData.image_url && (
+                    <img src={formData.image_url} alt="Preview" style={{ width: "200px", marginTop: "10px" }} />
+                )}
 
                 <button onClick={handleInsert}>➕ Insert</button>
                 <button onClick={handleUpdate} disabled={!formData.room_id}>🔄 Update</button>

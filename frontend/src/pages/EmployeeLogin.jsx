@@ -17,6 +17,7 @@ const EmployeeLogin = () => {
         try {
             const res = await axios.post("http://localhost:5000/api/employee/login", inputs);
             localStorage.setItem("user", JSON.stringify({
+                id: res.data.employee.employee_id,
                 name: res.data.employee.full_name,
                 role: "Employee"
             }));

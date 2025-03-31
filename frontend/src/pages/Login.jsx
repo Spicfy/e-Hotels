@@ -16,10 +16,14 @@ const Login = () => {
         e.preventDefault();
         try {
             const res = await axios.post("http://localhost:5000/api/login", inputs);
+            const customer = res.data.customer;
+
             localStorage.setItem("user", JSON.stringify({
+                id: res.data.customer.customer_id,   
                 name: res.data.customer.full_name,
                 role: "Customer"
             }));
+
             navigate("/");
         } catch (err) {
             setError(err.response?.data?.message || "Login failed");

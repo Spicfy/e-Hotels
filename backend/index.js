@@ -1,7 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const app = express();
-
+const multer = require('multer');
+const path = require('path');
 const cors=require('cors')
 app.use(express.json()); //req.body
 const pool = require('./db');
@@ -17,32 +18,69 @@ const bcrypt = require('bcrypt');
 app.use(cors())
 app.use(express.json());
 
+// 🖼️ Multer Setup (MUST COME BEFORE ANY ROUTE THAT USES 'upload')
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads/');
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.originalname);
+        cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        const allowed = ['.png', '.jpg', '.jpeg', '.gif'];
+        const ext = path.extname(file.originalname).toLowerCase();
+        if (!allowed.includes(ext)) {
+            return cb(new Error('Only images are allowed'));
+        }
+        cb(null, true);
+    }
+});
+
+// Static folder for uploads
+app.use('/uploads', express.static('uploads'));
+
+// Upload route
+app.post('/api/upload', upload.single('image'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded.' });
+    }
+    const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    res.json({ message: 'Upload successful!', url: imageUrl });
+});
+
+
+
 function generateToken(user){
     return jwt.sing(
         
     )
 }
 app.post('/api/bookings', async(req, res) => {
-    try{
-        const {customer_id, room_id, check_in_date, check_out_date} = req.body;
+    console.log("📦 Incoming Booking:", req.body);  // ✅ 调试输出
 
-        if(!customer_id || room_id, check_in_date, check_out_date){
-            return res.status(400).json({message: 'Missing required fields'});
-        }
+    const { customer_id, room_id, check_in_date, check_out_date } = req.body;
+
+    if (!customer_id || !room_id || !check_in_date || !check_out_date) {
+        console.log("❌ Missing fields!", { customer_id, room_id, check_in_date, check_out_date });
+        return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    try {
         const result = await pool.query(
-            'INSERT INTO bookings (customer_id, room_id, check_in_date, check_out_date,  status)   VALUES ($1, $2, $3, $4, $5) RETURNING booking_id',
-            [customer_id, room_id, check_in_date, check_out_date, 'confirmed'] 
+            'INSERT INTO bookings (customer_id, room_id, check_in_date, check_out_date, status) VALUES ($1, $2, $3, $4, $5) RETURNING booking_id',
+            [customer_id, room_id, check_in_date, check_out_date, 'confirmed']
         );
-        const booking_id = result.rows[0].booking_id;
-
-        res.json({success: true, message: 'Booking created successfully!', booking_id:
-            booking_id
-        });
-    } catch(error){
-        console.error(error.message);
-        res.status(500).json({success: false, message: 'Failed to create booking.',
-            error: error.message
-        });
+        res.json({ success: true, message: 'Booking created successfully!', booking_id: result.rows[0].booking_id });
+    } catch (error) {
+        console.error("🔥 Booking Error:", error.message);
+        res.status(500).json({ success: false, message: 'Failed to create booking.', error: error.message });
     }
 })
 app.post('/api/rentals/payments', async(req, res) => {
@@ -216,25 +254,37 @@ app.post('/api/customer', async (req, res) => {
       res.status(500).json({ message: "Error updating employee." });
     }
   });
-  
 
-  app.post("/api/room", async (req, res) => {
+
+app.post("/api/room", upload.single("image"), async (req, res) => {
     try {
-        const { hotel_id, price, amenities, capacity, sea_view, extendable, damages, room_number } = req.body;
-        const amenitiesArray = amenities ? amenities.split(",").map(item => item.trim()) : [];
-      console.log(amenitiesArray);
-        
+        const {
+            hotel_id, price, amenities, capacity,
+            sea_view, extendable, damages, room_number
+        } = req.body;
+
+        const amenitiesArray = amenities
+            ? amenities.split(",").map(a => a.trim())
+            : [];
+
+        // ✅ 获取图片路径
+        const image_url = req.file ? `/uploads/${req.file.filename}` : null;
+
         const result = await pool.query(
-            `INSERT INTO rooms (hotel_id, price, amenities, capacity, sea_view, extendable, damages, room_number)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-            [hotel_id, price, amenitiesArray, capacity, sea_view, extendable, damages, room_number]
+            `INSERT INTO rooms (hotel_id, price, amenities, capacity, sea_view, extendable, damages, room_number, image_url)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING *`,
+            [hotel_id, price, amenitiesArray, capacity, sea_view, extendable, damages, room_number, image_url]
         );
-        res.json(result.rows[0]);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Database error" });
-    } 
+
+        res.json({ message: "Room created successfully", room: result.rows[0] });
+
+    } catch (err) {
+        console.error("Room creation error:", err);
+        res.status(500).json({ message: "Failed to create room" });
+    }
 });
+
 
 app.put("/api/room/:id", async (req, res) => {
     try {
@@ -712,6 +762,22 @@ app.get("/api/totalrooms", async (req, res) => {
         res.status(500).json({ message: "Server error." });
     }
 });
+
+
+
+
+
+
+// Make uploaded file can be access by URL
+app.use('/uploads', express.static('uploads'));
+
+
+
+
+
+
+
+
 
 app.listen(5000, () => {
     console.log("Server is running on port 5000");
