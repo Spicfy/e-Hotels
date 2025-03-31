@@ -8,7 +8,7 @@ CREATE TABLE hotel_chains (
     email VARCHAR(255),
     phone VARCHAR(20)
 );
-s
+
 
 CREATE TABLE hotels (
     hotel_id SERIAL PRIMARY KEY,
@@ -25,7 +25,7 @@ CREATE TABLE rooms (
     hotel_id INTEGER REFERENCES hotels(hotel_id) ON DELETE CASCADE,
     price DECIMAL (10, 2) NOT NULL,
 
-    amenities TEXT[], 
+    amenities TEXT[],
     capacity INTEGER,
 
     sea_view BOOLEAN DEFAULT FALSE,
@@ -67,23 +67,23 @@ CREATE TABLE employee_roles (
 
 CREATE TABLE bookings (
     booking_id SERIAL PRIMARY KEY,
-    customer_id INTEGER REFERENCES customer(customer_id),
+    customer_id INTEGER REFERENCES customers(customer_id),
     room_id INTEGER REFERENCES rooms(room_id),
     check_in_date DATE NOT NULL,
     check_out_date DATE NOT NULL,
     booking_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status VARCHAR(50) CHECK (status IN ('confirmed', 'cancelled', 'checked_in', 'checked_out')),
+    status VARCHAR(50) CHECK (status IN ('confirmed', 'cancelled', 'checked_in', 'checked_out'))
 );
 
 CREATE TABLE archived_bookings (
     archived_booking_id SERIAL PRIMARY KEY,
     customer_id INTEGER,
     room_id INTEGER,
-    check_in_date DATE, 
+    check_in_date DATE,
     check_out_date DATE,
     booking_date TIMESTAMP,
     status VARCHAR(50)
-)
+);
 
 -- Archived Rentings Table (History)
 CREATE TABLE archived_rentings (
@@ -115,33 +115,33 @@ CREATE VIEW available_rooms AS
   WHERE b.booking_id IS NULL;
 
 CREATE VIEW available_rooms_per_area AS
-SELECT 
+SELECT
     h.address AS area,
     COUNT(r.room_id) AS available_rooms_count
-FROM 
+FROM
     hotels h
-JOIN 
+JOIN
     rooms r ON h.hotel_id = r.hotel_id
-LEFT JOIN 
+LEFT JOIN
     bookings b ON r.room_id = b.room_id
     AND (b.status IN ('confirmed', 'checked_in'))
     AND (
         b.check_in_date <= CURRENT_DATE AND b.check_out_date >= CURRENT_DATE
     )
-WHERE 
+WHERE
     b.booking_id IS NULL
-GROUP BY 
+GROUP BY
     h.address;
 
 CREATE VIEW aggregated_room_capacity_per_hotel AS
-SELECT 
+SELECT
     h.name AS hotel_name,
     SUM(r.capacity) AS total_capacity
-FROM 
+FROM
     hotels h
-JOIN 
+JOIN
     rooms r ON h.hotel_id = r.hotel_id
-GROUP BY 
+GROUP BY
     h.name;
 
 
@@ -161,16 +161,28 @@ AFTER INSERT ON hotels
 FOR EACH ROW
 EXECUTE FUNCTION update_hotel_count();
 
-CREATE TRIGGER archive_completed_bookings
-AFTER UPDATE ON bookings
-FOR EACH ROW
-WHEN NEW.status = 'checked_out'
+CREATE OR REPLACE FUNCTION archive_checked_out_bookings()
+RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO archived_bookings (customer_id, room_id, check_in_date, check_out_date, booking_date, status)
-    VALUES (OLD.customer_id, OLD.room_id, OLD.check_in_date, OLD.check_out_date, OLD.booking_date, OLD.status);
+    IF NEW.status = 'checked_out' THEN
+        INSERT INTO archived_bookings (
+            customer_id, room_id, check_in_date, check_out_date, booking_date, status
+        )
+        VALUES (
+            OLD.customer_id, OLD.room_id, OLD.check_in_date, OLD.check_out_date, OLD.booking_date, OLD.status
+        );
 
-    DELETE FROM bookings WHERE booking_id = OLD.booking_id;
+DELETE FROM bookings WHERE booking_id = OLD.booking_id;
+END IF;
+
+RETURN NEW;
 END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER archive_completed_bookings
+    AFTER UPDATE ON bookings
+    FOR EACH ROW
+    EXECUTE FUNCTION archive_checked_out_bookings();
 
 CREATE INDEX idx_available_rooms ON rooms (hotel_id);
 

@@ -45,17 +45,20 @@ app.post('/api/bookings', async(req, res) => {
         });
     }
 })
-app.post('/api/rentals/payment', async (req, res) => {
+app.post('/api/rentals/payments', async(req, res) => {
     try{
         const {renting_id, amount} = req.body;
 
-        if(!renting_id || !amount){
-            return res.status(400).json({message: 'Renting ID and Amount are required'})
+        if(!renting_id || !amount) {
+            return res.status(400).json({ message: 'Renting ID and Amount are required'})
         }
-
         await pool.query('CALL register_payment($1, $2)', [renting_id, amount]);
-
-        res.json({success: true, message: 'Payment'})
+        res.json({success: true, message: 'Payment successful!'});
+    } catch(error){
+        console.error(error.message);
+        res.status(500).json({success: false, message: 'Failed to process payment',
+            error: error.message
+        });
     }
 })
 app.post('/api/rentals/convert', async (req, res) => {
@@ -524,7 +527,8 @@ app.post('/api/register/customer', async (req, res) => {
 
 
 
-app.listen(3000, () => {
-    console.log("Server is running on port 3000");
+app.listen(5000, () => {
+    console.log("Server is running on port 5000");
+
 })
 
