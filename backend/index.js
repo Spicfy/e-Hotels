@@ -56,6 +56,11 @@ app.post('/api/rentals/payment', async (req, res) => {
         await pool.query('CALL register_payment($1, $2)', [renting_id, amount]);
 
         res.json({success: true, message: 'Payment'})
+    } catch(error){
+        console.error(error.message);
+        res.status(500).json({success: false, message: 'Failed to process payment',
+            error: error.message
+        });
     }
 })
 app.post('/api/rentals/convert', async (req, res) => {
@@ -542,7 +547,48 @@ app.post('/api/register/customer', async (req, res) => {
        res.status(500).json({message: error.message});
     }
 });
+app.get('/api/customers/:customer_id', async (req, res) => {
+    const {customer_id} = req.params;
+    try{
+        const existingCustomer = await pool.query('SELECT * FROM customers WHERE customer_id = $1',[customer_id]);
 
+        if(existingCustomer.rows.length === 0) {
+            return res.status(404).json({message: 'Customer not found.'});
+        }
+
+        res.status(200).json(existingCustomer.rows[0]);
+    } catch(error){
+        console.error('Error fetching customer:', error);
+        res.status(500).json({message: 'Internal server error. '});
+    }
+});
+app.get('/api/employee/:employee_id', async(req, res) => {
+    const {employee_id} = req.params;
+    try{
+        const existingEmployee = await pool.query('SELECT * FROM employees WHERE employee_id = $1', [employee_id]);
+        if(existingEmployee.rows.length ===0){
+            return res.status(404).json({message: 'Customer not found.' });
+        }
+
+        res.status(200).json(existingEmployee.rows[0]);
+        
+    }catch(error){
+        console.error('Error fetching employee:', error);
+        res.status(500).json({message: 'Internal server error.'});
+    }
+})
+
+app.get('/api/bookings', async(req, res) => {
+    try{
+        const result = await pool.query('SELECT * FROM bookings');
+
+        res.status(200).json(result.rows);
+
+    } catch(error){
+        console.error('Error fetching bookings:', error);
+        res.status(500).json({message: 'Internal server error.'});
+    }
+})
 
 
 app.listen(3000, () => {
