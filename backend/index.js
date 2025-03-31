@@ -355,25 +355,24 @@ app.delete('/api/hotel/:hotel_id', async (req, res) => {
 
 
 app.get('/api/roomsbyarea', async (req, res) => {
-    try{
+    try {
         const { area } = req.query;
-        
-        const allRooms = await pool.query("SELECT available_rooms_count FROM available_rooms_per_area WHERE area = $1", [area]);
-        if (allRooms.rows.length === 0) {
-            
-            return res.status(404).json({ message: "Hotel not found" });
-        }
-        console.log(allRooms.rows[0]);
-        
-        //console.log(allRooms.rows);
-        
 
-        res.json(allRooms.rows[0]); 
-        
-    }catch(error){
-        console.error(error.message)
+        // Fliter the specific room
+        const result = await pool.query(`
+            SELECT * FROM available_rooms WHERE area = $1
+        `, [area]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "No available rooms found in this area." });
+        }
+
+        res.json(result.rows);  // Return the room
+    } catch (error) {
+        console.error("Error fetching rooms by area:", error.message);
+        res.status(500).json({ message: "Server error." });
     }
-})
+});
 
 
 app.get('/api/hotel-chains', async (req, res) => {
@@ -695,7 +694,24 @@ app.get('/api/filters/categories', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+app.get("/api/totalrooms", async (req, res) => {
+    try {
+        const { name } = req.query;
 
+        const result = await pool.query(`
+            SELECT * FROM available_rooms WHERE hotel_name = $1
+        `, [name]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "No rooms found for the hotel." });
+        }
+
+        res.json(result.rows);
+    } catch (error) {
+        console.error("Error fetching totalrooms:", error.message);
+        res.status(500).json({ message: "Server error." });
+    }
+});
 
 app.listen(5000, () => {
     console.log("Server is running on port 5000");
