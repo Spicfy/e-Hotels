@@ -78,7 +78,7 @@ function App() {
         setMessage("Error deleting room.");
       }
     };
-  
+   
     return (
       <div style={{ padding: "20px", maxWidth: "500px", margin: "auto" }}>
         <h2>Manage Room</h2>
