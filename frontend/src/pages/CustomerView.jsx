@@ -1,6 +1,7 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
+import '../App.css';
+import { useNavigate } from 'react-router-dom';
 
 
 const AvailableRooms = () => {
@@ -15,16 +16,10 @@ const AvailableRooms = () => {
         maxPrice: ""
     });
 
-    // useEffect(() => {
-    //     fetchRooms();
-    // }, []);
-
-    const fetchRooms = async (queryParams = {}) => {
+    const fetchRooms = async () => {
         try {
-            const response = await axios.get("http://localhost:3000/api/available-rooms", { params: queryParams });
+            const response = await axios.get("http://localhost:5000/api/available-rooms", { params: filters });
             setRooms(response.data);
-            console.log(queryParams);
-            
         } catch (error) {
             console.error("Error fetching rooms:", error);
         }
@@ -33,47 +28,39 @@ const AvailableRooms = () => {
     const handleFilterChange = (e) => {
         setFilters({ ...filters, [e.target.name]: e.target.value });
     };
-
-    const applyFilters = () => {
-        fetchRooms(filters);
-    };
-
+    const navigate = useNavigate();
     return (
-        <div className="p-6">
-            <h2 className="text-2xl font-semibold mb-4">Available Rooms</h2>
+        <div className="room-container">
+            <h2 className="page-title">Available Rooms 🏨</h2>
 
-            {/* Filters */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
-                <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} placeholder="Check-in Date" />
-                <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} placeholder="Check-out Date" />
-                <input type="number" name="capacity" value={filters.capacity} onChange={handleFilterChange} placeholder="Capacity" />
-                <input type="text" name="area" value={filters.area} onChange={handleFilterChange} placeholder="Area" />
-                <input type="text" name="hotelChain" value={filters.hotelChain} onChange={handleFilterChange} placeholder="Hotel Chain" />
-                <input type="text" name="category" value={filters.category} onChange={handleFilterChange} placeholder="Category" />
-                <input type="number" name="maxPrice" value={filters.maxPrice} onChange={handleFilterChange} placeholder="Max Price" />
+            <div className="filter-section">
+                <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} />
+                <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} />
+                <input type="number" name="capacity" placeholder="Capacity" value={filters.capacity} onChange={handleFilterChange} />
+                <input type="text" name="area" placeholder="Area" value={filters.area} onChange={handleFilterChange} />
+                <input type="text" name="hotelChain" placeholder="Hotel Chain" value={filters.hotelChain} onChange={handleFilterChange} />
+                <input type="text" name="category" placeholder="Category" value={filters.category} onChange={handleFilterChange} />
+                <input type="number" name="maxPrice" placeholder="Max Price" value={filters.maxPrice} onChange={handleFilterChange} />
+
+                <button className="apply-btn" onClick={fetchRooms}>🔍 Search Rooms</button>
+                <button className="back-btn" onClick={() => navigate('/')}>⬅ Back to Home</button>
             </div>
 
-            <button onClick={applyFilters} className="mb-4">Apply Filters</button>
-
-            {/* Room Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="rooms-grid">
                 {rooms.length > 0 ? (
                     rooms.map((room) => (
-                        <div key={room.room_id} className="p-4 shadow-lg">
-                            
-                                <h3 className="text-lg font-semibold">{room.hotel_name}</h3>
-                                <p className="text-sm text-gray-600">{room.area}</p>
-                                <p className="mt-2"><strong>Room Number:</strong> {room.room_number}</p>
-                                <p><strong>Price:</strong> ${room.price}</p>
-                                <p><strong>Capacity:</strong> {room.capacity} people</p>
-                                <p><strong>Sea View:</strong> {room.sea_view ? "Yes" : "No"}</p>
-                                <p><strong>Extendable:</strong> {room.extendable ? "Yes" : "No"}</p>
-                                <button className="mt-4 w-full">Book Now</button>
-                            
+                        <div key={room.room_id} className="room-card">
+                            <h3>{room.hotel_name} ({room.area})</h3>
+                            <p><strong>Room Number:</strong> {room.room_number}</p>
+                            <p><strong>Price:</strong> ${room.price}</p>
+                            <p><strong>Capacity:</strong> {room.capacity} persons</p>
+                            <p><strong>Sea View:</strong> {room.sea_view ? "✅" : "❌"}</p>
+                            <p><strong>Extendable:</strong> {room.extendable ? "✅" : "❌"}</p>
+                            <button className="book-btn">📅 Book Now</button>
                         </div>
                     ))
                 ) : (
-                    <p>No available rooms found.</p>
+                    <p className="no-rooms-msg">No available rooms found. Try adjusting your search criteria.</p>
                 )}
             </div>
         </div>

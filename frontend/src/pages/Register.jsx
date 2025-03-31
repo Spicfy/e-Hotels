@@ -1,59 +1,55 @@
-import React from 'react'
-import { Link } from 'react-router'
-import { useState } from 'react'
-import axios from "axios"
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import '../App.css';
 
 const Register = () => {
-    const [inputs,setInputs] =useState({
-      full_name:"",
-      address:"",
-    password:"",
-    id_type:"",
-      
-     
-    })
-  
-    const [err,setError] = useState(null)
-  
-    const handleChange = e =>{
-      setInputs(prev=>({...prev,[e.target.name]:e.target.value}))
-    }
-  
-    
-  
-    const handleSubmit = async e=>{
-      e.preventDefault()
-      try{
-        console.log(inputs);
-        
-       await axios.post("http://localhost:3000/api/customer",inputs)
-        
-       
-      
-      }
-      catch(err){
-        setError(err.response.data)
-        
-      }
-  
-    }
-  
+    const [inputs, setInputs] = useState({
+        full_name: "",
+        address: "",
+        password: "",
+        id_type: "",
+    });
+
+    const [err, setError] = useState(null);
+    const [success, setSuccess] = useState(null);
+    const navigate = useNavigate();
+
+    const handleChange = (e) => {
+        setInputs(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.post("http://localhost:5000/api/customer", inputs);
+            setSuccess("✅ Registration successful!");
+            setError(null);
+        } catch (err) {
+            setError(err.response?.data?.message || "Registration failed");
+            setSuccess(null);
+        }
+    };
+
     return (
-      <div className='auth'>
-        <h1>Register</h1>
-        <form >
-        
-          <input required type="text" placeholder='Full name'name='full_name' onChange={handleChange}/>
-          <input required type="text" placeholder='address'name='address' onChange={handleChange}/>
-          <input required type="text" placeholder='type
-of ID, e.g. SSN/SIN/driving licence'name='id_type' onChange={handleChange}/>
-          <input required type="password" placeholder='password' name="password" onChange={handleChange}/>
-          { err && <p>{err}</p>}
-          <button onClick={handleSubmit}>Register</button>
-          <span>Already have an account? <Link to="/login">Login</Link></span>
-        </form>
-      </div>
-    )
-  }
-  
-  export default Register
+        <div className='auth-container'>
+            <form className="auth-form" onSubmit={handleSubmit}>
+                <h2>Customer Registration 👤</h2>
+                <input required type="text" placeholder='Full Name' name='full_name' onChange={handleChange} />
+                <input required type="text" placeholder='Address' name='address' onChange={handleChange} />
+                <input required type="text" placeholder='ID Type (e.g., SSN, SIN)' name='id_type' onChange={handleChange} />
+                <input required type="password" placeholder='Password' name="password" onChange={handleChange} />
+
+                {err && <p className="error-msg">{err}</p>}
+                {success && <p className="success-msg">{success}</p>}
+
+                <button type="submit">Register</button>
+                <button type="button" className="back-btn" onClick={() => navigate('/')}>⬅ Back to Home</button>
+
+                <span>Already have an account? <Link to="/login">Login here</Link></span>
+            </form>
+        </div>
+    );
+};
+
+export default Register;

@@ -1,59 +1,41 @@
-import {React, useState} from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
-const RoomsByArea = () => {
-    const [totalrooms, setRooms] = useState({
-        available_rooms_count: 0,
-    });
-    const [area, setArea] = useState("");
-     
+import { useNavigate } from 'react-router-dom';
+import '../App.css';
 
-    
+const RoomsByArea = () => {
+    const [rooms, setRooms] = useState({ available_rooms_count: 0 });
+    const [area, setArea] = useState("");
+    const navigate = useNavigate();
 
     const fetchRooms = async () => {
         try {
-            //console.log(area);
-            
-            const response = await axios.get("http://localhost:3000/api/roomsbyarea", {
-                params: {
-                    area: area,
-                },
-            }
-            );
-            setRooms(response.data||{total_capacity: 0});
-            //console.log(queryParams);
-           
-            
-            
+            const response = await axios.get("http://localhost:5000/api/roomsbyarea", { params: { area } });
+            setRooms(response.data || { available_rooms_count: 0 });
         } catch (error) {
             console.error("Error fetching rooms:", error);
         }
     };
 
-    const handleFilterChange = (e) => {
-        setArea(e.target.value);
-    };
-
-    const applyFilters = () => {
-        fetchRooms(area);
-    };
-
     return (
-        <div className="p-6">
-            <h2 className="text-2xl font-semibold mb-4">Available Rooms</h2>
-
-            
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
-                <input type="text" name="area" value={area} onChange={handleFilterChange} placeholder="Address " />
+        <div className="room-container">
+            <h2 className="page-title">Rooms By Area 🌍</h2>
+            <div className="filter-section">
+                <input
+                    type="text"
+                    placeholder="Enter Area"
+                    value={area}
+                    onChange={(e) => setArea(e.target.value)}
+                />
+                <button className="apply-btn" onClick={fetchRooms}>🔍 Search</button>
+                <button className="back-btn" onClick={() => navigate('/')}>⬅ Back to Home</button>
             </div>
-
-            <button onClick={applyFilters} className="mb-4">Search Rooms</button>
-
-            <div>Total Rooms: {totalrooms.available_rooms_count}</div>
-
-        
+            <div className="result-section">
+                <h3>Total Available Rooms: <span className="result-count">{rooms.available_rooms_count}</span></h3>
+            </div>
         </div>
     );
-
-}
+};
 
 export default RoomsByArea;
+;
