@@ -1,62 +1,40 @@
-import React from "react";
-import { useState } from "react";
-import axios from "axios";
-const TotelRooms = () => {
+import React, { useState } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import '../App.css';
 
-    const [totalrooms, setRooms] = useState({
-        total_capacity: 0,
-    });
+const TotalRooms = () => {
+    const [rooms, setRooms] = useState({ total_capacity: 0 });
     const [name, setName] = useState("");
-     
-
-    // useEffect(() => {
-    //     fetchRooms();
-    // }, []);
+    const navigate = useNavigate();
 
     const fetchRooms = async () => {
         try {
-            console.log(name);
-            
-            const response = await axios.get("http://localhost:3000/api/totalrooms", {
-                params: {
-                    name: name,
-                },
-            }
-            );
-            setRooms(response.data||{total_capacity: 0});
-            //console.log(queryParams);
-           
-            
-            
+            const response = await axios.get("http://localhost:5000/api/totalrooms", { params: { name } });
+            setRooms(response.data || { total_capacity: 0 });
         } catch (error) {
             console.error("Error fetching rooms:", error);
         }
     };
 
-    const handleFilterChange = (e) => {
-        setName(e.target.value);
-    };
-
-    const applyFilters = () => {
-        fetchRooms(name);
-    };
-
     return (
-        <div className="p-6">
-            <h2 className="text-2xl font-semibold mb-4">Available Capacity</h2>
-
-            
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
-                <input type="text" name="name" value={name} onChange={handleFilterChange} placeholder="Hotel Name" />
+        <div className="room-container">
+            <h2 className="page-title">Total Capacity by Hotel 📈</h2>
+            <div className="filter-section">
+                <input
+                    type="text"
+                    placeholder="Hotel Name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                />
+                <button className="apply-btn" onClick={fetchRooms}>🔍 Search</button>
+                <button className="back-btn" onClick={() => navigate('/')}>⬅ Back to Home</button>
             </div>
-
-            <button onClick={applyFilters} className="mb-4">Search Rooms</button>
-
-            <div>Total Capacity: {totalrooms.total_capacity}</div>
-
-        
+            <div className="result-section">
+                <h3>Total Room Capacity: <span className="result-count">{rooms.total_capacity}</span></h3>
+            </div>
         </div>
     );
 };
 
-export default TotelRooms;
+export default TotalRooms;

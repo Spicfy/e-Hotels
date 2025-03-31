@@ -235,3 +235,103 @@
 .back-btn:hover {
   background-color: #666;
 }
+
+.room-container {
+  padding: 30px;
+  background-color: #f5f8fa;
+}
+
+.page-title {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 2rem;
+  color: #333;
+}
+
+.filter-section {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.filter-section input {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.apply-btn {
+  background-color: #61dafb;
+  color: #fff;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.apply-btn:hover {
+  background-color: #21a1f1;
+}
+
+.rooms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.room-card {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+
+.book-btn {
+  margin-top: 10px;
+  background-color: #21a1f1;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  width: 100%;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.book-btn:hover {
+  background-color: #1a88c8;
+}
+
+.no-rooms-msg {
+  text-align: center;
+  color: #888;
+  font-size: 1.1rem;
+}
+.result-section {
+  text-align: center;
+  margin-top: 25px;
+  font-size: 1.2rem;
+  color: #444;
+}
+
+.result-count {
+  color: #61dafb;
+  font-weight: bold;
+}
+
+.back-btn {
+  background-color: #999;
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.back-btn:hover {
+  background-color: #666;
+}
