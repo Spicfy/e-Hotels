@@ -386,6 +386,27 @@ app.delete('/api/hotel/:hotel_id', async (req, res) => {
 })
 
 
+app.get('/api/roomsbyarea', async (req, res) => {
+    try{
+        const { area } = req.query;
+        
+        const allRooms = await pool.query("SELECT available_rooms_count FROM available_rooms_per_area WHERE area = $1", [area]);
+        if (allRooms.rows.length === 0) {
+            
+            return res.status(404).json({ message: "Hotel not found" });
+        }
+        console.log(allRooms.rows[0]);
+        
+        //console.log(allRooms.rows);
+        
+
+        res.json(allRooms.rows[0]); 
+        
+    }catch(error){
+        console.error(error.message)
+    }
+})
+
 
 app.get('/api/hotel-chains', async (req, res) => {
     try{
