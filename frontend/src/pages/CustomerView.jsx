@@ -15,7 +15,7 @@ const AvailableRooms = () => {
         category: "",
         maxPrice: ""
     });
-
+    const [sort, setSort] = useState(""); // 新增排序项
     const [dropdowns, setDropdowns] = useState({
         areas: [],
         hotels: [],
@@ -25,37 +25,35 @@ const AvailableRooms = () => {
 
     const navigate = useNavigate();
 
-    // Fetch dropdown options and initial rooms once on mount
+    const fetchDropdowns = async () => {
+        try {
+            const [areasRes, hotelsRes, chainsRes, categoriesRes] = await Promise.all([
+                axios.get("http://localhost:5000/api/filters/areas"),
+                axios.get("http://localhost:5000/api/filters/hotels"),
+                axios.get("http://localhost:5000/api/filters/chains"),
+                axios.get("http://localhost:5000/api/filters/categories"),
+            ]);
+            setDropdowns({
+                areas: areasRes.data,
+                hotels: hotelsRes.data,
+                chains: chainsRes.data,
+                categories: categoriesRes.data,
+            });
+        } catch (error) {
+            console.error("Error loading filter options:", error);
+        }
+    };
+
     useEffect(() => {
-        const fetchDropdownsAndRooms = async () => {
-            try {
-                const [areasRes, hotelsRes, chainsRes, categoriesRes, roomsRes] = await Promise.all([
-                    axios.get("http://localhost:5000/api/filters/areas"),
-                    axios.get("http://localhost:5000/api/filters/hotels"),
-                    axios.get("http://localhost:5000/api/filters/chains"),
-                    axios.get("http://localhost:5000/api/filters/categories"),
-                    axios.get("http://localhost:5000/api/available-rooms"), // No filters: fetch all
-                ]);
-
-                setDropdowns({
-                    areas: areasRes.data,
-                    hotels: hotelsRes.data,
-                    chains: chainsRes.data,
-                    categories: categoriesRes.data,
-                });
-
-                setRooms(roomsRes.data);
-            } catch (error) {
-                console.error("Error loading data:", error);
-            }
-        };
-
-        fetchDropdownsAndRooms();
+        fetchDropdowns();
+        fetchRooms(); // 初始加载全部房间
     }, []);
 
     const fetchRooms = async () => {
         try {
-            const response = await axios.get("http://localhost:5000/api/available-rooms", { params: filters });
+            const response = await axios.get("http://localhost:5000/api/available-rooms", {
+                params: { ...filters, sort }
+            });
             setRooms(response.data);
         } catch (error) {
             console.error("Error fetching rooms:", error);
@@ -64,6 +62,37 @@ const AvailableRooms = () => {
 
     const handleFilterChange = (e) => {
         setFilters({ ...filters, [e.target.name]: e.target.value });
+    };
+
+    const handleSortChange = (e) => {
+        setSort(e.target.value);
+    };
+
+    const handleBooking = async (room_id) => {
+        const customer = JSON.parse(localStorage.getItem("user"));
+        if (!customer || customer.role !== "Customer") {
+            alert("You must be logged in as a customer to book.");
+            return;
+        }
+
+        const { startDate, endDate } = filters;
+        if (!startDate || !endDate) {
+            alert("Please select check-in and check-out dates.");
+            return;
+        }
+
+        try {
+            const response = await axios.post("http://localhost:5000/api/bookings", {
+                customer_id: customer.id,
+                room_id,
+                check_in_date: startDate,
+                check_out_date: endDate
+            });
+            alert("✅ Booking successful! Booking ID: " + response.data.booking_id);
+        } catch (error) {
+            console.error("Booking error:", error);
+            alert("❌ Failed to book the room.");
+        }
     };
 
     return (
@@ -105,6 +134,15 @@ const AvailableRooms = () => {
 
                 <input type="number" name="maxPrice" placeholder="Max Price" value={filters.maxPrice} onChange={handleFilterChange} />
 
+                {/* 排序选项 */}
+                <select name="sort" value={sort} onChange={handleSortChange}>
+                    <option value="">Sort By</option>
+                    <option value="price_asc">Price: Low to High</option>
+                    <option value="price_desc">Price: High to Low</option>
+                    <option value="capacity_asc">Capacity: Low to High</option>
+                    <option value="capacity_desc">Capacity: High to Low</option>
+                </select>
+
                 <button className="apply-btn" onClick={fetchRooms}>🔍 Search Rooms</button>
                 <button className="back-btn" onClick={() => navigate('/')}>⬅ Back to Home</button>
             </div>
@@ -119,7 +157,7 @@ const AvailableRooms = () => {
                             <p><strong>Capacity:</strong> {room.capacity} persons</p>
                             <p><strong>Sea View:</strong> {room.sea_view ? "✅" : "❌"}</p>
                             <p><strong>Extendable:</strong> {room.extendable ? "✅" : "❌"}</p>
-                            <button className="book-btn">📅 Book Now</button>
+                            <button className="book-btn" onClick={() => handleBooking(room.room_id)}>📅 Book Now</button>
                         </div>
                     ))
                 ) : (

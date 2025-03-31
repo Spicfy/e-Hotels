@@ -444,52 +444,59 @@ app.post('/api/hotels', async (req, res) => {
     }
 })
 app.get("/api/available-rooms", async (req, res) => {
-    const { startDate, endDate, capacity, area, hotelChain, category, maxPrice } = req.query;
-    
-    console.log(capacity);
-    
+    const { startDate, endDate, capacity, area, hotelChain, hotel_name, category, maxPrice, sortBy } = req.query;
+
     let query = "SELECT * FROM available_rooms WHERE 1=1";
 
-
     if (startDate && endDate) {
-        console.log(startDate);
-        
         query += ` AND NOT EXISTS (SELECT 1 FROM bookings WHERE available_rooms.room_id = bookings.room_id AND (check_in_date BETWEEN '${startDate}' AND '${endDate}' OR check_out_date BETWEEN '${startDate}' AND '${endDate}'))`;
-        
     }
-    if (capacity) {
-        query += " AND capacity >="+capacity;
-        
-    }
-    if (area) {
-        query += ` AND area = '${area}'`;
-        
-    }
-    if (hotelChain) {
-        query += ` AND hotel_name = '${hotelChain}'`;
-    
-    }
-    if (category) {
-        query += " AND hotel_category = "+category;
-        
-    }
-    if (maxPrice) {
-        query += " AND price <= "+maxPrice;
- 
-    }
-    console.log(query);
-    
+    if (capacity) query += ` AND capacity >= ${capacity}`;
+    if (area) query += ` AND area = '${area}'`;
+    if (hotelChain) query += ` AND hotel_chain = '${hotelChain}'`;
+    if (hotel_name) query += ` AND hotel_name = '${hotel_name}'`;
+    if (category) query += ` AND hotel_category = ${category}`;
+    if (maxPrice) query += ` AND price <= ${maxPrice}`;
+
+    if (sortBy === "price_asc") query += " ORDER BY price ASC";
+    else if (sortBy === "price_desc") query += " ORDER BY price DESC";
+    else if (sortBy === "capacity_asc") query += " ORDER BY capacity ASC";
+    else if (sortBy === "capacity_desc") query += " ORDER BY capacity DESC";
+
     try {
-        
         const result = await pool.query(query);
-        res.json(result.rows); 
+        res.json(result.rows);
     } catch (error) {
-        console.log(2); 
-        
         console.error("Error fetching rooms:", error);
         res.status(500).send("Server error");
     }
 });
+// Booking Endpoint
+app.post('/api/bookings', async(req, res) => {
+    try{
+        const { customer_id, room_id, check_in_date, check_out_date } = req.body;
+
+        if (!customer_id || !room_id || !check_in_date || !check_out_date) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        const result = await pool.query(
+            'INSERT INTO bookings (customer_id, room_id, check_in_date, check_out_date, status) VALUES ($1, $2, $3, $4, $5) RETURNING booking_id',
+            [customer_id, room_id, check_in_date, check_out_date, 'confirmed']
+        );
+
+        res.json({ success: true, message: 'Booking created successfully!', booking_id: result.rows[0].booking_id });
+    } catch (error) {
+        console.error("Booking error:", error);
+        res.status(500).json({ success: false, message: 'Failed to create booking.', error: error.message });
+    }
+});
+
+app.listen(5000, () => console.log("Server is running on port 5000"));
+
+
+
+
 
 //Routes
 
