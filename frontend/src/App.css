@@ -440,3 +440,10 @@
   margin-top: 15px;
   font-weight: bold;
 }
+
+.room-card p strong {
+  display: inline-block;
+  width: 120px;
+}
+
+

@@ -26,6 +26,7 @@ const AvailableRooms = () => {
 
     const navigate = useNavigate();
 
+    // Load filters & initial rooms
     useEffect(() => {
         const fetchDropdownsAndRooms = async () => {
             try {
@@ -132,6 +133,8 @@ const AvailableRooms = () => {
                     <option value="price_desc">Price (High to Low)</option>
                     <option value="capacity_asc">Capacity (Low to High)</option>
                     <option value="capacity_desc">Capacity (High to Low)</option>
+                    <option value="hotel_category_asc">Stars (Low to High)</option>
+                    <option value="hotel_category_desc">Stars (High to Low)</option>
                 </select>
 
                 <button className="apply-btn" onClick={fetchRooms}>🔍 Search Rooms</button>
@@ -144,6 +147,7 @@ const AvailableRooms = () => {
                         <div key={room.room_id} className="room-card">
                             <h3>{room.hotel_name} ({room.area})</h3>
                             <p><strong>Room Number:</strong> {room.room_number}</p>
+                            <p><strong>Stars:</strong> {room.hotel_category} ⭐</p>
                             <p><strong>Price:</strong> ${room.price}</p>
                             <p><strong>Capacity:</strong> {room.capacity} persons</p>
                             <p><strong>Sea View:</strong> {room.sea_view ? "✅" : "❌"}</p>

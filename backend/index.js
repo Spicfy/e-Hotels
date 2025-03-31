@@ -133,7 +133,7 @@ app.post('/api/customer', async (req, res) => {
         res.status(201).json({ message: "Customer registered successfully!", customer: newCustomer.rows[0] });
 
     } catch (error) {
-        console.error("后端执行出错:", error.message);  // 明确输出此错误消息
+        console.error("Backend error:", error.message);  // 明确输出此错误消息
         res.status(500).json({ message: "Server error", error: error.message });
     }
 });
@@ -445,65 +445,75 @@ app.post('/api/hotels', async (req, res) => {
 })
 // Room searching and sorting
 app.get("/api/available-rooms", async (req, res) => {
-    const { startDate, endDate, capacity, area, hotelChain, category, maxPrice, sortBy } = req.query;
-    console.log("[Query Params]", req.query);
-    let query = "SELECT * FROM available_rooms WHERE 1=1";
+    const {
+        startDate, endDate, capacity, area, hotelChain,
+        category, maxPrice, sortBy, hotel_name
+    } = req.query;
+
+    let query = `SELECT * FROM available_rooms WHERE 1=1`;
+    const values = [];
+    let index = 1;
 
     if (startDate && endDate) {
         query += ` AND NOT EXISTS (
             SELECT 1 FROM bookings 
             WHERE available_rooms.room_id = bookings.room_id 
-            AND (
-                check_in_date BETWEEN '${startDate}' AND '${endDate}' 
-                OR check_out_date BETWEEN '${startDate}' AND '${endDate}'
-            )
+            AND (check_in_date BETWEEN $${index++} AND $${index++} 
+                OR check_out_date BETWEEN $${index - 2} AND $${index - 1})
         )`;
+        values.push(startDate, endDate);
     }
 
     if (capacity) {
-        query += ` AND capacity >= ${capacity}`;
+        query += ` AND capacity >= $${index}`;
+        values.push(capacity);
+        index++;
     }
 
     if (area) {
-        query += ` AND area = '${area}'`;
+        query += ` AND area ILIKE $${index}`;
+        values.push(area);
+        index++;
+    }
+
+    if (hotel_name) {
+        query += ` AND hotel_name ILIKE $${index}`;
+        values.push(hotel_name);
+        index++;
     }
 
     if (hotelChain) {
-        query += ` AND hotel_name = '${hotelChain}'`;
+        query += ` AND hotel_chain_name ILIKE $${index}`;
+        values.push(hotelChain);
+        index++;
     }
 
     if (category) {
-        query += ` AND hotel_category = ${category}`;
+        query += ` AND hotel_category = $${index}`;
+        values.push(category);
+        index++;
     }
 
     if (maxPrice) {
-        query += ` AND price <= ${maxPrice}`;
+        query += ` AND price <= $${index}`;
+        values.push(maxPrice);
+        index++;
     }
 
-    // ✅ 排序逻辑
     if (sortBy) {
         switch (sortBy) {
-            case 'price_asc':
-                query += ` ORDER BY price ASC`;
-                break;
-            case 'price_desc':
-                query += ` ORDER BY price DESC`;
-                break;
-            case 'capacity_asc':
-                query += ` ORDER BY capacity ASC`;
-                break;
-            case 'capacity_desc':
-                query += ` ORDER BY capacity DESC`;
-                break;
-            default:
-                break;
+            case 'price_asc': query += ` ORDER BY price ASC`; break;
+            case 'price_desc': query += ` ORDER BY price DESC`; break;
+            case 'capacity_asc': query += ` ORDER BY capacity ASC`; break;
+            case 'capacity_desc': query += ` ORDER BY capacity DESC`; break;
+            case 'hotel_category_asc': query += ` ORDER BY hotel_category ASC`; break;
+            case 'hotel_category_desc': query += ` ORDER BY hotel_category DESC`; break;
+            default: break;
         }
     }
 
-    console.log("[Room Query]", query);
-
     try {
-        const result = await pool.query(query);
+        const result = await pool.query(query, values);
         res.json(result.rows);
     } catch (error) {
         console.error("Error fetching rooms:", error);
