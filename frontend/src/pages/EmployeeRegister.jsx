@@ -17,7 +17,11 @@ const EmployeeRegister = () => {
     const navigate = useNavigate();
 
     const handleChange = (e) => {
-        setInputs(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        const value = e.target.name === "hotel_id"
+            ? parseInt(e.target.value)
+            : e.target.value;
+
+        setInputs(prev => ({ ...prev, [e.target.name]: value }));
     };
 
     const handleSubmit = async (e) => {

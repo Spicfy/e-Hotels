@@ -4,11 +4,7 @@ import axios from 'axios';
 import '../App.css';
 
 const Login = () => {
-    const [inputs, setInputs] = useState({
-        full_name: "",
-        password: "",
-    });
-
+    const [inputs, setInputs] = useState({ full_name: "", password: "" });
     const [err, setError] = useState(null);
     const navigate = useNavigate();
 
@@ -19,7 +15,11 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post("http://localhost:5000/api/login", inputs);
+            const res = await axios.post("http://localhost:5000/api/login", inputs);
+            localStorage.setItem("user", JSON.stringify({
+                name: res.data.customer.full_name,
+                role: "Customer"
+            }));
             navigate("/");
         } catch (err) {
             setError(err.response?.data?.message || "Login failed");
@@ -32,12 +32,9 @@ const Login = () => {
                 <h2>Customer Login 🔐</h2>
                 <input required type="text" placeholder='Full Name' name='full_name' onChange={handleChange} />
                 <input required type="password" placeholder='Password' name="password" onChange={handleChange} />
-
                 {err && <p className="error-msg">{err}</p>}
-
                 <button type="submit">Login</button>
                 <button type="button" className="back-btn" onClick={() => navigate('/')}>⬅ Back to Home</button>
-
                 <span>Don't have an account? <Link to="/sign-up">Register here</Link></span>
             </form>
         </div>

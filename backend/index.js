@@ -116,62 +116,28 @@ app.post('/api/rentals/direct', async(req, res) => {
 
 
 app.post('/api/customer', async (req, res) => {
-    
-    
-   try{
-        const {full_name, address, password,id_type} = req.body;
+    try {
+        const { full_name, address, password, id_type } = req.body;
 
-         
-        
-        // console.log(full_name);
-        // console.log(address);
-        // console.log(password);
-        // console.log(id_type);
-        
-        if(!full_name || !address || !id_type||!password){
-            
-            
-            
-            return res.status(400).json({message: "Name, address and id_type are required"}); //bad request
+        console.log('收到的请求数据为:', req.body); // 添加此日志
+
+        if (!full_name || !address || !id_type || !password) {
+            return res.status(400).json({ message: "Name, address and id_type are required" });
         }
+
         const newCustomer = await pool.query(
-            "INSERT INTO customers(full_name, password, address, id_type) VALUES($1, $2, $3,$4) RETURNING *",
-            [full_name, password,address, id_type] //value to be inserted
-        )
-    }catch(error){ 
-        console.error(error.message)
+            "INSERT INTO customers(full_name, password, address, id_type) VALUES($1, $2, $3, $4) RETURNING *",
+            [full_name, password, address, id_type]
+        );
+
+        res.status(201).json({ message: "Customer registered successfully!", customer: newCustomer.rows[0] });
+
+    } catch (error) {
+        console.error("后端执行出错:", error.message);  // 明确输出此错误消息
+        res.status(500).json({ message: "Server error", error: error.message });
     }
-}) 
+});
 
-app.post('/api/employee', async (req, res) => {
-    
-    
-    try{
-         const {full_name, address, password,ssn_sin,hotel_id} = req.body;
- 
-          
-         
-         console.log(full_name);
-         console.log(address);
-          console.log(password);
-          console.log(ssn_sin);
-
-console.log(hotel_id);
-         
-         if(!full_name || !address || !ssn_sin||!password||!hotel_id){
-        
-             
-             
-             return res.status(400).json({message: "Name, address and hotel id are required"}); //bad request
-         }
-         const newCustomer = await pool.query(
-             "INSERT INTO employees(full_name, address, ssn_sin,hotel_id,password) VALUES($1, $2, $3,$4,$5) RETURNING *",
-             [full_name,address,ssn_sin,hotel_id,password] //value to be inserted
-         )
-     }catch(error){ 
-         console.error(error.message)
-     }
- }) 
  app.delete("/api/employee/:id", async (req, res) => {
     const { id } = req.params;
   
@@ -586,6 +552,119 @@ app.get('/api/bookings', async(req, res) => {
         res.status(500).json({message: 'Internal server error.'});
     }
 })
+app.post('/api/login', async (req, res) => {
+    const { full_name, password } = req.body;
+
+    if (!full_name || !password) {
+        return res.status(400).json({ message: "Full name and password are required." });
+    }
+
+    try {
+        const result = await pool.query(
+            "SELECT * FROM customers WHERE full_name = $1 AND password = $2",
+            [full_name, password]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(401).json({ message: "Invalid credentials." });
+        }
+
+        // You can add JWT token generation here in the future
+        res.status(200).json({ message: "Login successful!", customer: result.rows[0] });
+
+    } catch (err) {
+        console.error("Login error:", err.message);
+        res.status(500).json({ message: "Server error during login." });
+    }
+});
+app.post('/api/employee', async (req, res) => {
+    try {
+        let { full_name, address, password, ssn_sin, hotel_id } = req.body;
+
+        hotel_id = parseInt(hotel_id); // ✅ 强制转换为整数
+
+        console.log(full_name, address, password, ssn_sin, hotel_id);
+
+        if (!full_name || !address || !ssn_sin || !password || isNaN(hotel_id)) {
+            return res.status(400).json({ message: "All fields are required and hotel_id must be valid." });
+        }
+
+        const newEmployee = await pool.query(
+            "INSERT INTO employees(full_name, address, ssn_sin, hotel_id, password) VALUES($1, $2, $3, $4, $5) RETURNING *",
+            [full_name, address, ssn_sin, hotel_id, password]
+        );
+
+        res.status(201).json({ message: "Employee registered successfully!", employee: newEmployee.rows[0] });
+
+    } catch (error) {
+        console.error("Employee registration error:", error.message);
+        res.status(500).json({ message: "Server error during employee registration." });
+    }
+});
+app.post('/api/employee/login', async (req, res) => {
+    const { ssn_sin, password } = req.body;
+
+    if (!ssn_sin || !password) {
+        return res.status(400).json({ message: "SSN/SIN and password are required." });
+    }
+
+    try {
+        const result = await pool.query(
+            "SELECT * FROM employees WHERE ssn_sin = $1 AND password = $2",
+            [ssn_sin, password]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(401).json({ message: "Invalid credentials." });
+        }
+
+        res.status(200).json({ message: "Login successful!", employee: result.rows[0] });
+
+    } catch (err) {
+        console.error("Employee login error:", err.message);
+        res.status(500).json({ message: "Server error during employee login." });
+    }
+});
+app.get('/api/filters/areas', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT DISTINCT address AS area FROM hotels");
+        res.json(result.rows.map(row => row.area));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+app.get('/api/filters/hotels', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT DISTINCT name FROM hotels");
+        res.json(result.rows.map(row => row.name));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+app.get('/api/filters/hotels', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT DISTINCT name FROM hotels");
+        res.json(result.rows.map(row => row.name));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+app.get('/api/filters/chains', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT DISTINCT name FROM hotel_chains");
+        res.json(result.rows.map(row => row.name));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+app.get('/api/filters/categories', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT DISTINCT stars FROM hotels ORDER BY stars");
+        res.json(result.rows.map(row => row.stars));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 
 app.listen(5000, () => {

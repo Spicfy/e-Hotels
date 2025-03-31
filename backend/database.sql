@@ -149,7 +149,7 @@ CREATE OR REPLACE FUNCTION update_hotel_count()
 RETURNS TRIGGER AS $$
 BEGIN UPDATE hotel_chains
 SET num_hotels = num_hotels + 1
-WHERE chain_id = NEW.chin_id;
+WHERE chain_id = NEW.chain_id;
 
 RETURN NEW;
 END;

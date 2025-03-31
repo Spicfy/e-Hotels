@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import '../App.css';
 import { useNavigate } from 'react-router-dom';
-
 
 const AvailableRooms = () => {
     const [rooms, setRooms] = useState([]);
@@ -12,9 +11,47 @@ const AvailableRooms = () => {
         capacity: "",
         area: "",
         hotelChain: "",
+        hotel_name: "",
         category: "",
         maxPrice: ""
     });
+
+    const [dropdowns, setDropdowns] = useState({
+        areas: [],
+        hotels: [],
+        chains: [],
+        categories: []
+    });
+
+    const navigate = useNavigate();
+
+    // Fetch dropdown options and initial rooms once on mount
+    useEffect(() => {
+        const fetchDropdownsAndRooms = async () => {
+            try {
+                const [areasRes, hotelsRes, chainsRes, categoriesRes, roomsRes] = await Promise.all([
+                    axios.get("http://localhost:5000/api/filters/areas"),
+                    axios.get("http://localhost:5000/api/filters/hotels"),
+                    axios.get("http://localhost:5000/api/filters/chains"),
+                    axios.get("http://localhost:5000/api/filters/categories"),
+                    axios.get("http://localhost:5000/api/available-rooms"), // No filters: fetch all
+                ]);
+
+                setDropdowns({
+                    areas: areasRes.data,
+                    hotels: hotelsRes.data,
+                    chains: chainsRes.data,
+                    categories: categoriesRes.data,
+                });
+
+                setRooms(roomsRes.data);
+            } catch (error) {
+                console.error("Error loading data:", error);
+            }
+        };
+
+        fetchDropdownsAndRooms();
+    }, []);
 
     const fetchRooms = async () => {
         try {
@@ -28,7 +65,7 @@ const AvailableRooms = () => {
     const handleFilterChange = (e) => {
         setFilters({ ...filters, [e.target.name]: e.target.value });
     };
-    const navigate = useNavigate();
+
     return (
         <div className="room-container">
             <h2 className="page-title">Available Rooms 🏨</h2>
@@ -37,9 +74,35 @@ const AvailableRooms = () => {
                 <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} />
                 <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} />
                 <input type="number" name="capacity" placeholder="Capacity" value={filters.capacity} onChange={handleFilterChange} />
-                <input type="text" name="area" placeholder="Area" value={filters.area} onChange={handleFilterChange} />
-                <input type="text" name="hotelChain" placeholder="Hotel Chain" value={filters.hotelChain} onChange={handleFilterChange} />
-                <input type="text" name="category" placeholder="Category" value={filters.category} onChange={handleFilterChange} />
+
+                <select name="area" value={filters.area} onChange={handleFilterChange}>
+                    <option value="">Select Area</option>
+                    {dropdowns.areas.map((area, idx) => (
+                        <option key={idx} value={area}>{area}</option>
+                    ))}
+                </select>
+
+                <select name="hotel_name" value={filters.hotel_name} onChange={handleFilterChange}>
+                    <option value="">Select Hotel</option>
+                    {dropdowns.hotels.map((hotel, idx) => (
+                        <option key={idx} value={hotel}>{hotel}</option>
+                    ))}
+                </select>
+
+                <select name="hotelChain" value={filters.hotelChain} onChange={handleFilterChange}>
+                    <option value="">Select Hotel Chain</option>
+                    {dropdowns.chains.map((chain, idx) => (
+                        <option key={idx} value={chain}>{chain}</option>
+                    ))}
+                </select>
+
+                <select name="category" value={filters.category} onChange={handleFilterChange}>
+                    <option value="">Select Star Rating</option>
+                    {dropdowns.categories.map((cat, idx) => (
+                        <option key={idx} value={cat}>{cat} Stars</option>
+                    ))}
+                </select>
+
                 <input type="number" name="maxPrice" placeholder="Max Price" value={filters.maxPrice} onChange={handleFilterChange} />
 
                 <button className="apply-btn" onClick={fetchRooms}>🔍 Search Rooms</button>
