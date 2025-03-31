@@ -620,17 +620,52 @@ app.get('/api/employee/:employee_id', async(req, res) => {
     }
 })
 
-app.get('/api/bookings', async(req, res) => {
-    try{
-        const result = await pool.query('SELECT * FROM bookings');
+app.post('/api/bookings', async (req, res) => {
+    try {
+        const { customer_id, room_id, check_in_date, check_out_date } = req.body;
 
-        res.status(200).json(result.rows);
+        if (!customer_id || !room_id || !check_in_date || !check_out_date) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
 
-    } catch(error){
-        console.error('Error fetching bookings:', error);
-        res.status(500).json({message: 'Internal server error.'});
+        // 冲突检测：同一个房间的预订或租赁时间不能重叠
+// 1. Check for overlapping bookings
+        const checkBookingConflict = await pool.query(`
+            SELECT 1 FROM bookings
+            WHERE room_id = $1
+              AND NOT (
+                $3 <= check_in_date OR $2 >= check_out_date
+                )
+        `, [room_id, check_in_date, check_out_date]);
+
+// 2. Check for overlapping rentals
+        const checkRentalConflict = await pool.query(`
+            SELECT 1 FROM rentals
+            WHERE room_id = $1
+              AND NOT (
+                $3 <= check_in_date OR $2 >= check_out_date
+                )
+        `, [room_id, check_in_date, check_out_date]);
+
+        if (checkBookingConflict.rowCount > 0 || checkRentalConflict.rowCount > 0) {
+            return res.status(400).json({
+                message: '❌ Room is already booked or rented during that period.'
+            });
+        }
+
+        // 创建 booking
+        const result = await pool.query(`
+            INSERT INTO bookings (customer_id, room_id, check_in_date, check_out_date, status)
+            VALUES ($1, $2, $3, $4, 'confirmed') RETURNING *
+        `, [customer_id, room_id, check_in_date, check_out_date]);
+
+        res.status(201).json({ message: "✅ Booking created successfully!", booking: result.rows[0] });
+
+    } catch (error) {
+        console.error("Booking error:", error.message);
+        res.status(500).json({ message: "Server error", error: error.message });
     }
-})
+});
 app.post('/api/login', async (req, res) => {
     const { full_name, password } = req.body;
 
@@ -772,7 +807,41 @@ app.get("/api/totalrooms", async (req, res) => {
 app.use('/uploads', express.static('uploads'));
 
 
+// 当前客户的所有 bookings
+app.get('/api/my-bookings/:customer_id', async (req, res) => {
+    const { customer_id } = req.params;
+    try {
+        const result = await pool.query(`
+            SELECT b.*, r.room_number, h.name AS hotel_name, h.address AS area
+            FROM bookings b
+            JOIN rooms r ON b.room_id = r.room_id
+            JOIN hotels h ON r.hotel_id = h.hotel_id
+            WHERE b.customer_id = $1
+            ORDER BY b.check_in_date DESC
+        `, [customer_id]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching bookings", error: err.message });
+    }
+});
 
+// 当前客户的所有 rentals
+app.get('/api/my-rentals/:customer_id', async (req, res) => {
+    const { customer_id } = req.params;
+    try {
+        const result = await pool.query(`
+            SELECT rt.*, r.room_number, h.name AS hotel_name, h.address AS area
+            FROM rentals rt
+            JOIN rooms r ON rt.room_id = r.room_id
+            JOIN hotels h ON r.hotel_id = h.hotel_id
+            WHERE rt.customer_id = $1
+            ORDER BY rt.check_in_date DESC
+        `, [customer_id]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching rentals", error: err.message });
+    }
+});
 
 
 

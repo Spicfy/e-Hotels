@@ -66,27 +66,21 @@ const AvailableRooms = () => {
         setFilters({ ...filters, [e.target.name]: e.target.value });
     };
 
-    const handleBooking = async (room_id) => {
+    const handleBooking = (room_id) => {
         const user = JSON.parse(localStorage.getItem("user"));
-        const customer_id = user?.id || user?.customer_id;
-
-        if (!customer_id || !filters.startDate || !filters.endDate) {
+        if (!user || !user.id || !filters.startDate || !filters.endDate) {
             alert("Please login and select check-in/check-out dates.");
             return;
         }
 
-        try {
-            await axios.post("http://localhost:5000/api/bookings", {
-                customer_id,
+        navigate('/booking-form', {
+            state: {
+                customer_id: user.id,
                 room_id,
                 check_in_date: filters.startDate,
-                check_out_date: filters.endDate,
-            });
-            alert("✅ Booking confirmed!");
-        } catch (err) {
-            console.error("Booking error:", err);
-            alert("❌ Booking failed.");
-        }
+                check_out_date: filters.endDate
+            }
+        });
     };
 
     return (

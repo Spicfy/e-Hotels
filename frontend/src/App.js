@@ -16,6 +16,9 @@ import Room from './pages/Room';
 import Hotel from './pages/Hotel';
 import TotelRooms from './pages/TotalRooms';
 import RoomsByArea from './pages/RoomsByArea';
+import BookingForm from './components/BookingForm';
+import MyStatus from './pages/MyStatus';
+
 function App() {
   return (
     <Router>
@@ -34,6 +37,8 @@ function App() {
         <Route path='/hotel' element={<Hotel/>}/>
         <Route path='/totalrooms' element={<TotelRooms/>}/>
         <Route path='/roomsbyarea' element={<RoomsByArea/>}/>
+        <Route path="/booking-form" element={<BookingForm />} />
+        <Route path="/mystatus" element={<MyStatus />} />
       </Routes>
     </Router>
   );

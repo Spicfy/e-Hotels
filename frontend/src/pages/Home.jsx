@@ -3,6 +3,8 @@ import Navbar from "../components/Navbar";
 import "../App.css";
 
 const Home = () => {
+    const user = JSON.parse(localStorage.getItem("user"));
+
     return (
         <div className="App">
             <Navbar />
@@ -17,6 +19,11 @@ const Home = () => {
                     <a className="menu-link" href="/admin">Admin Page 🛠️</a>
                     <a className="menu-link" href="/totalrooms">Total Capacity by Hotel 📈</a>
                     <a className="menu-link" href="/roomsbyarea">Total Capacity by Area 🌍</a>
+
+                    {/* ✅ Only show when logged in */}
+                    {user && user.role === "Customer" && (
+                        <a className="menu-link" href="/mystatus">📋 My Booking Status</a>
+                    )}
                 </div>
             </header>
         </div>
