@@ -22,58 +22,96 @@ function generateToken(user){
         
     )
 }
+app.post('/api/bookings', async(req, res) => {
+    try{
+        const {customer_id, room_id, check_in_date, check_out_date} = req.body;
 
-app.put("/api/customer/:id", async (req, res) => {
-    const { id } = req.params;
-  const { full_name, password, address, id_type, registration_date } = req.body;
+        if(!customer_id || room_id, check_in_date, check_out_date){
+            return res.status(400).json({message: 'Missing required fields'});
+        }
+        const result = await pool.query(
+            'INSERT INTO bookings (customer_id, room_id, check_in_date, check_out_date,  status)   VALUES ($1, $2, $3, $4, $5) RETURNING booking_id',
+            [customer_id, room_id, check_in_date, check_out_date, 'confirmed'] 
+        );
+        const booking_id = result.rows[0].booking_id;
 
-  try {
-    // Fetch existing customer data
-    const existingCustomer = await pool.query(
-      `SELECT * FROM customers WHERE customer_id = $1`,
-      [id]
-    );
-
-    if (existingCustomer.rows.length === 0) {
-      return res.status(404).json({ error: "Customer not found." });
+        res.json({success: true, message: 'Booking created successfully!', booking_id:
+            booking_id
+        });
+    } catch(error){
+        console.error(error.message);
+        res.status(500).json({success: false, message: 'Failed to create booking.',
+            error: error.message
+        });
     }
+})
+app.post('/api/rentals/payment', async (req, res) => {
+    try{
+        const {renting_id, amount} = req.body;
 
-    // Get current data and only update if new values are provided
-    const currentCustomer = existingCustomer.rows[0];
+        if(!renting_id || !amount){
+            return res.status(400).json({message: 'Renting ID and Amount are required'})
+        }
 
-    const updatedFullName = full_name || currentCustomer.full_name;
-    const updatedPassword = password || currentCustomer.password;
-    const updatedAddress = address || currentCustomer.address;
-    const updatedIdType = id_type || currentCustomer.id_type;
+        await pool.query('CALL register_payment($1, $2)', [renting_id, amount]);
 
-    // Do NOT update registration_date unless explicitly provided
-    const updateQuery = `
-      UPDATE customers
-      SET full_name = $1,
-          password = $2,
-          address = $3,
-          id_type = $4
-      WHERE customer_id = $5
-      RETURNING *;
-    `;
+        res.json({success: true, message: 'Payment'})
+    }
+})
+app.post('/api/rentals/convert', async (req, res) => {
+    try{
+        const {booking_id, employee_id} = req.body;
 
-    const result = await pool.query(updateQuery, [
-      updatedFullName,
-      updatedPassword,
-      updatedAddress,
-      updatedIdType,
-      id,
-    ]);
+        if(!booking_id || !employee_id){
+            return res.status(400).json({message: 'Booking ID and Employee ID are required'});
 
-    res.json({
-      message: "Customer updated successfully!",
-      customer: result.rows[0],
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Error updating customer." });
-  }
-  });
+
+        }
+        await pool.query('CALL convert_booking_to_rental($1, $2)', [booking_id,employee_id]);
+        res.json({success: true, message: 'Booking converted to rental successfully!' })
+    } catch(error){
+     
+        res.status(500).json({success: false, message: 'Failed to convert booking to rental',
+            error: error.message
+        });
+    }
+})
+app.post('/api/rentals/payments', async(req, res) => {
+    try{
+        const {renting_id, amount} = req.body;
+
+        if(!renting_id || !amount) {
+            return res.status(400).json({ message: 'Renting ID and Amount are required'})
+        }
+        await pool.query('CALL register_payment($1, $2', [renting_id, amount]);
+
+        res.json({success: true, message: 'Payment successful!'});
+    } catch(error){
+        console.error(error.message);
+        res.status(500).json({success: false, message: 'Failed to process payment',
+            error: error.message
+        });
+    }
+})
+
+app.post('/api/rentals/direct', async(req, res) => {
+    try{
+        const {customer_id, room_id, employee_id , check_in_date , check_out_date} = req.body;
+
+        if(!customer_id || !room_id || !employee_id || !check_in_date || !check_out_date){
+            return res.status(400).json({message: 'Missing required fields'});
+        }
+
+        await pool.query('CALL direct_rental($1, $2, $3, $4, $5)', [customer_id, room_id, employee_id, check_in_date, check_out_date]);
+        res.json({success:true, message: 'Direct rental successful!'});
+    }  catch(error){
+        console.error(error.message);
+        res.status(500).json({success: false, message: 'Failed to process direct rental',
+            error: error.message
+        });
+    }
+})
+
 
 app.post('/api/customer', async (req, res) => {
     
@@ -98,32 +136,11 @@ app.post('/api/customer', async (req, res) => {
             "INSERT INTO customers(full_name, password, address, id_type) VALUES($1, $2, $3,$4) RETURNING *",
             [full_name, password,address, id_type] //value to be inserted
         )
-        res.json({ message: "Customer added successfully!" });
-
     }catch(error){ 
         console.error(error.message)
     }
 }) 
 
-app.delete("/api/customer/:id", async (req, res) => {
-    const { id } = req.params;
-  
-    try {
-      const result = await pool.query(
-        `DELETE FROM customers WHERE customer_id = $1 RETURNING *`,
-        [id]
-      );
-  
-      if (result.rows.length === 0) {
-        return res.status(404).json({ error: "Customer not found." });
-      }
-  
-      res.json({ message: "Customer deleted successfully!" });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: "Error deleting customer." });
-    }
-  });
 app.post('/api/employee', async (req, res) => {
     
     
@@ -137,7 +154,7 @@ app.post('/api/employee', async (req, res) => {
           console.log(password);
           console.log(ssn_sin);
 
-
+console.log(hotel_id);
          
          if(!full_name || !address || !ssn_sin||!password||!hotel_id){
         
@@ -149,227 +166,10 @@ app.post('/api/employee', async (req, res) => {
              "INSERT INTO employees(full_name, address, ssn_sin,hotel_id,password) VALUES($1, $2, $3,$4,$5) RETURNING *",
              [full_name,address,ssn_sin,hotel_id,password] //value to be inserted
          )
-         res.json({ message: "Employee added successfully!" });
-
      }catch(error){ 
          console.error(error.message)
      }
  }) 
- app.delete("/api/employee/:id", async (req, res) => {
-    const { id } = req.params;
-  
-    try {
-      const result = await pool.query(
-        `DELETE FROM employees WHERE employee_id = $1 RETURNING *`,
-        [id]
-      );
-  
-      if (result.rows.length === 0) {
-        return res.status(404).json({ error: "Employee not found." });
-      }
-  
-      res.json({ message: "Employee deleted successfully!" });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: "Error deleting Employee." });
-    }
-  });
-
-  app.put('/api/employee/:employee_id', async (req, res) => {
-    const { employee_id } = req.params; // Get employee ID from URL params
-    const { full_name, password, address, ssn_sin, hotel_id } = req.body;
-    // console.log(full_name);
-    // console.log(address);
-    // console.log(password);
-    // console.log(ssn_sin);
-    // console.log(hotel_id);
-    // console.log(employee_id);
-    const existingEmployee = await pool.query( 
-        `SELECT * FROM employees WHERE employee_id = $1`,
-        [employee_id] 
-      );
-  
-      if (existingEmployee.rows.length === 0) {
-        return res.status(404).json({ error: "Employee not found." });
-      }
-  
-      // Get current data and only update if new values are provided
-      const currentEmployee = existingEmployee.rows[0];
-  
-      const updatedFullName = full_name || currentEmployee.full_name;
-      const updatedPassword = password || currentEmployee.password;
-      const updatedAddress = address || currentEmployee.address;
-      const updatedSSN = ssn_sin || currentEmployee.ssn_sin;
-        const updatedHotelID = hotel_id || currentEmployee.hotel_id;
-    
-    
-    try {
-      // Step 1: Use a nested query to update employee if hotel_id exists
-      const updateQuery = `
-        UPDATE employees
-        SET full_name = $1, password = $2, address = $3, ssn_sin = $4, hotel_id = $5
-        WHERE employee_id = $6
-        AND EXISTS (
-          SELECT 1 FROM hotels WHERE hotel_id = $5
-        )
-        RETURNING *;
-      `;
-      
-      const updateValues = [updatedFullName, updatedPassword, updatedAddress, updatedSSN, updatedHotelID, employee_id];
-      const updateResult = await pool.query(updateQuery, updateValues);
-  
-      if (updateResult.rowCount === 0) {
-        return res.status(400).json({ message: "Hotel not found or Employee not updated." });
-      }
-  
-      // Step 2: Return the updated employee
-      res.json({
-        message: "Employee updated successfully!",
-        employee: updateResult.rows[0],
-      });
-  
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "Error updating employee." });
-    }
-  });
-  
-
-  app.post("/api/room", async (req, res) => {
-    try {
-        const { hotel_id, price, amenities, capacity, sea_view, extendable, damages, room_number } = req.body;
-        const amenitiesArray = amenities ? amenities.split(",").map(item => item.trim()) : [];
-      console.log(amenitiesArray);
-        
-        const result = await pool.query(
-            `INSERT INTO rooms (hotel_id, price, amenities, capacity, sea_view, extendable, damages, room_number)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-            [hotel_id, price, amenitiesArray, capacity, sea_view, extendable, damages, room_number]
-        );
-        res.json(result.rows[0]);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Database error" });
-    } 
-});
-
-app.put("/api/room/:id", async (req, res) => {
-    try {
-        const roomId = req.params.id;
-        const existing = await pool.query("SELECT * FROM rooms WHERE room_id = $1", [roomId]);
-        if (existing.rows.length === 0) {
-            return res.status(404).json({ error: "Room not found" });
-        }
-
-       const { hotel_id, price, amenities, capacity, sea_view, extendable, damages, room_number } = req.body;
-
-        const amenitiesArray = amenities ? amenities.split(",").map(item => item.trim()) : existing.rows[0].amenities;
-        const updatedPrice = price || existing.rows[0].price;
-        const updatedCapacity = capacity || existing.rows[0].capacity;
-        const updatedSeaView = sea_view !== undefined ? sea_view : existing.rows[0].sea_view;
-        const updatedExtendable = extendable !== undefined ? extendable : existing.rows[0].extendable;
-        const updatedDamages = damages || existing.rows[0].damages;
-        const updatedRoomNumber = room_number || existing.rows[0].room_number;
-        const updatedHotelId = hotel_id || existing.rows[0].hotel_id;
-
-        const result = await pool.query(
-            `UPDATE rooms SET hotel_id = $1, price = $2, amenities = $3, capacity = $4,
-            sea_view = $5, extendable = $6, damages = $7, room_number = $8 WHERE room_id = $9 RETURNING *`,
-            [updatedHotelId, updatedPrice, amenitiesArray, updatedCapacity, updatedSeaView, updatedExtendable, updatedDamages, updatedRoomNumber, roomId]
-        );
-        res.json(result.rows[0]);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Database error" });
-    }
-});
-
-app.delete("/api/room/:id", async (req, res) => {
-    try {
-        const roomId = req.params.id;
-        const result = await pool.query("DELETE FROM rooms WHERE room_id = $1 RETURNING *", [roomId]);
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: "Room not found" });
-        }
-        res.json({ message: "Room deleted successfully", room: result.rows[0] });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Database error" });
-    }
-})
-
-app.post('/api/hotel', async (req, res) => {
-    try{ 
-        const {employee_id, chain_id, name, stars, address, contact_email, contact_phone } = req.body;
-        const newHotel = await pool.query(
-            "INSERT INTO hotels(chain_id, name, stars, address, contact_email, contact_phone,manager_id) VALUES($1, $2, $3, $4, $5, $6,$7) RETURNING *",
-            [chain_id, name, stars, address, contact_email, contact_phone,employee_id] //value to be inserted
-        )
-        res.json({ message: "Hotel added successfully!" });
-    }catch(error){
-        console.error(error.message)
-    }
-})    
-
-app.put('/api/hotel/:hotel_id', async (req, res) => {
-    try{
-        const {hotel_id} = req.params;
-        console.log(hotel_id);
-        
-        const {employee_id, chain_id, name, stars, address, contact_email, contact_phone } = req.body;
-        
-        const existingHotel = await pool.query(
-            `SELECT * FROM hotels WHERE hotel_id = $1`,
-            [hotel_id] 
-        )
-        const updatedEmployee_id = employee_id || existingHotel.rows[0].manager_id;
-        const updatedChain_id = chain_id || existingHotel.rows[0].chain_id;
-        const updatedName = name || existingHotel.rows[0].name;
-        const updatedStars = stars || existingHotel.rows[0].stars;
-        const updatedAddress = address || existingHotel.rows[0].address;
-        const updatedContact_email = contact_email || existingHotel.rows[0].contact_email;
-        const updatedContact_phone = contact_phone || existingHotel.rows[0].contact_phone;
-
-        // console.log(updatedEmployee_id);
-        // console.log(updatedChain_id);
-        // console.log(updatedName);
-        // console.log(updatedStars);
-        // console.log(updatedAddress);
-        // console.log(updatedContact_email);
-        // console.log(updatedContact_phone);
-        // console.log(hotel_id);
-        
-        const updateHotel = await pool.query(
-            "UPDATE hotels SET manager_id = $1, chain_id = $2, name = $3, stars = $4, address = $5, contact_email = $6, contact_phone = $7 WHERE hotel_id = $8 RETURNING *",
-            [updatedEmployee_id, updatedChain_id, updatedName, updatedStars, updatedAddress, updatedContact_email, updatedContact_phone, hotel_id]
-        );
-        res.json({
-            message: "Hotel updated successfully!"});
-    }catch(error){
-        console.error(error.message)
-        res.status(500).json({message: "Error updating hotel"})
-    }
-})
-
-app.delete('/api/hotel/:hotel_id', async (req, res) => {
-    try{
-        const {hotel_id} = req.params;
-        
-        const deleteHotel = await pool.query(
-            "DELETE FROM hotels where hotel_id = $1 RETURNING *",
-            [hotel_id]
-        );
- 
-        if(deleteHotel.rowCount === 0){
-            return res.status(404).json({message: "Hotel not found"});
-        }
-        res.json({message: "Hotel deleted successfully", deletedHotel: deleteHotel.rows[0]});
-    }catch(error){
-        console.error(error.message)
-        res.status(500).json({message: "Error deleting hotel"})
-    }
-})
-
 
 
 app.get('/api/hotel-chains', async (req, res) => {
@@ -489,14 +289,25 @@ app.get("/api/available-rooms", async (req, res) => {
 
 //Routes
 
-app.post('/api/register', async (req, res) => {
+app.post('/api/register/customer', async (req, res) => {
+    
+    
+
+    
     try{
+        const { full_name, address, password, id_type} = req.body;
+       
+       
+        const customer = await User.createCustomer(full_name, address, password, id_type);
+        res.status(201).json({message: 'Customer registered successfully', customer});
 
     }
     catch(error){
-        console.error(error.message)
+       res.status(500).json({message: error.message});
     }
-})
+});
+
+
 
 app.listen(3000, () => {
     console.log("Server is running on port 3000");
