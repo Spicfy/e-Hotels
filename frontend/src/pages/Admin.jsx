@@ -1,27 +1,34 @@
 import React from "react";
-import { Link } from "react-router-dom";
-const Admin = ()=>{
+import { Link, useNavigate } from "react-router-dom";
+import '../App.css';
+
+const Admin = () => {
+    const navigate = useNavigate();
 
     return (
-        <div>
-            <div >
-                <Link to='/customer' > Insert/Update/Delete Customer
+        <div className="admin-container">
+            <h2 className="page-title">🛠️ Admin Panel</h2>
+            <div className="admin-menu">
+                <Link to='/customer' className="admin-link">
+                    👥 Manage Customers
                 </Link>
-            </div>
-            <div>
-            <Link to='/employee'> Insert/Update/Delete Employee</Link>
 
-            </div>
-            <div>
-            <Link to='/room'> Insert/Update/Delete Rooms</Link>
+                <Link to='/employee' className="admin-link">
+                    🧑‍💼 Manage Employees
+                </Link>
 
-            </div>
-            <div>
-            <Link to='/hotel'> Insert/Update/Delete Hotel</Link>
+                <Link to='/room' className="admin-link">
+                    🚪 Manage Rooms
+                </Link>
+
+                <Link to='/hotel' className="admin-link">
+                    🏨 Manage Hotels
+                </Link>
+
+                <button className="back-btn" onClick={() => navigate('/')}>⬅ Back to Home</button>
             </div>
         </div>
-        
-    )
-}
+    );
+};
 
 export default Admin;

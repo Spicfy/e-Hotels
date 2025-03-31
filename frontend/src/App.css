@@ -310,6 +310,7 @@
   color: #888;
   font-size: 1.1rem;
 }
+
 .result-section {
   text-align: center;
   margin-top: 25px;
@@ -331,7 +332,91 @@
   cursor: pointer;
   transition: 0.3s;
 }
-
+/* Back Btn #2 */
 .back-btn:hover {
   background-color: #666;
+}
+/* Admin Part */
+.admin-container {
+  background-color: #f5f8fa;
+  padding: 30px;
+  min-height: 80vh;
+  text-align: center;
+}
+
+.admin-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.admin-link {
+  display: inline-block;
+  width: 100%;
+  max-width: 300px;
+  background-color: #61dafb;
+  color: white;
+  padding: 12px 20px;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.admin-link:hover {
+  background-color: #21a1f1;
+  transform: translateY(-3px);
+}
+/* Admin pages common styles */
+.form-container {
+  background-color: #ffffff;
+  padding: 25px;
+  border-radius: 10px;
+  max-width: 600px;
+  margin: 20px auto;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.form-container input[type="text"],
+.form-container input[type="number"],
+.form-container input[type="password"],
+.form-container input[type="date"] {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.form-container label {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.form-container button {
+  background-color: #61dafb;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  margin-right: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.form-container button:hover {
+  background-color: #21a1f1;
+}
+
+.form-container button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.result-msg {
+  margin-top: 15px;
+  font-weight: bold;
 }
