@@ -13,9 +13,10 @@ const AvailableRooms = () => {
         hotelChain: "",
         hotel_name: "",
         category: "",
-        maxPrice: ""
+        maxPrice: "",
+        sortBy: ""
     });
-    const [sort, setSort] = useState(""); // 新增排序项
+
     const [dropdowns, setDropdowns] = useState({
         areas: [],
         hotels: [],
@@ -25,35 +26,36 @@ const AvailableRooms = () => {
 
     const navigate = useNavigate();
 
-    const fetchDropdowns = async () => {
-        try {
-            const [areasRes, hotelsRes, chainsRes, categoriesRes] = await Promise.all([
-                axios.get("http://localhost:5000/api/filters/areas"),
-                axios.get("http://localhost:5000/api/filters/hotels"),
-                axios.get("http://localhost:5000/api/filters/chains"),
-                axios.get("http://localhost:5000/api/filters/categories"),
-            ]);
-            setDropdowns({
-                areas: areasRes.data,
-                hotels: hotelsRes.data,
-                chains: chainsRes.data,
-                categories: categoriesRes.data,
-            });
-        } catch (error) {
-            console.error("Error loading filter options:", error);
-        }
-    };
-
     useEffect(() => {
-        fetchDropdowns();
-        fetchRooms(); // 初始加载全部房间
+        const fetchDropdownsAndRooms = async () => {
+            try {
+                const [areasRes, hotelsRes, chainsRes, categoriesRes, roomsRes] = await Promise.all([
+                    axios.get("http://localhost:5000/api/filters/areas"),
+                    axios.get("http://localhost:5000/api/filters/hotels"),
+                    axios.get("http://localhost:5000/api/filters/chains"),
+                    axios.get("http://localhost:5000/api/filters/categories"),
+                    axios.get("http://localhost:5000/api/available-rooms"),
+                ]);
+
+                setDropdowns({
+                    areas: areasRes.data,
+                    hotels: hotelsRes.data,
+                    chains: chainsRes.data,
+                    categories: categoriesRes.data,
+                });
+
+                setRooms(roomsRes.data);
+            } catch (error) {
+                console.error("Error loading data:", error);
+            }
+        };
+
+        fetchDropdownsAndRooms();
     }, []);
 
     const fetchRooms = async () => {
         try {
-            const response = await axios.get("http://localhost:5000/api/available-rooms", {
-                params: { ...filters, sort }
-            });
+            const response = await axios.get("http://localhost:5000/api/available-rooms", { params: filters });
             setRooms(response.data);
         } catch (error) {
             console.error("Error fetching rooms:", error);
@@ -64,34 +66,24 @@ const AvailableRooms = () => {
         setFilters({ ...filters, [e.target.name]: e.target.value });
     };
 
-    const handleSortChange = (e) => {
-        setSort(e.target.value);
-    };
-
     const handleBooking = async (room_id) => {
-        const customer = JSON.parse(localStorage.getItem("user"));
-        if (!customer || customer.role !== "Customer") {
-            alert("You must be logged in as a customer to book.");
-            return;
-        }
-
-        const { startDate, endDate } = filters;
-        if (!startDate || !endDate) {
-            alert("Please select check-in and check-out dates.");
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (!user || !user.id || !filters.startDate || !filters.endDate) {
+            alert("Please login and select check-in/check-out dates.");
             return;
         }
 
         try {
-            const response = await axios.post("http://localhost:5000/api/bookings", {
-                customer_id: customer.id,
-                room_id,
-                check_in_date: startDate,
-                check_out_date: endDate
+            await axios.post("http://localhost:5000/api/bookings", {
+                customer_id: user.id,
+                room_id: room_id,
+                check_in_date: filters.startDate,
+                check_out_date: filters.endDate,
             });
-            alert("✅ Booking successful! Booking ID: " + response.data.booking_id);
-        } catch (error) {
-            console.error("Booking error:", error);
-            alert("❌ Failed to book the room.");
+            alert("✅ Booking confirmed!");
+        } catch (err) {
+            console.error("Booking error:", err);
+            alert("❌ Booking failed.");
         }
     };
 
@@ -134,13 +126,12 @@ const AvailableRooms = () => {
 
                 <input type="number" name="maxPrice" placeholder="Max Price" value={filters.maxPrice} onChange={handleFilterChange} />
 
-                {/* 排序选项 */}
-                <select name="sort" value={sort} onChange={handleSortChange}>
+                <select name="sortBy" value={filters.sortBy} onChange={handleFilterChange}>
                     <option value="">Sort By</option>
-                    <option value="price_asc">Price: Low to High</option>
-                    <option value="price_desc">Price: High to Low</option>
-                    <option value="capacity_asc">Capacity: Low to High</option>
-                    <option value="capacity_desc">Capacity: High to Low</option>
+                    <option value="price_asc">Price (Low to High)</option>
+                    <option value="price_desc">Price (High to Low)</option>
+                    <option value="capacity_asc">Capacity (Low to High)</option>
+                    <option value="capacity_desc">Capacity (High to Low)</option>
                 </select>
 
                 <button className="apply-btn" onClick={fetchRooms}>🔍 Search Rooms</button>
