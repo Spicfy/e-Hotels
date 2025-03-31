@@ -1,25 +1,21 @@
-import React from "react";
-import { useState } from "react";
-import axios from "axios";
-const TotelRooms = () => {
-
+import {React, useState} from 'react';
+import axios from 'axios';
+const RoomsByArea = () => {
     const [totalrooms, setRooms] = useState({
-        total_capacity: 0,
+        available_rooms_count: 0,
     });
-    const [name, setName] = useState("");
+    const [area, setArea] = useState("");
      
 
-    // useEffect(() => {
-    //     fetchRooms();
-    // }, []);
+    
 
     const fetchRooms = async () => {
         try {
-            console.log(name);
+            //console.log(area);
             
-            const response = await axios.get("http://localhost:3000/api/totalrooms", {
+            const response = await axios.get("http://localhost:3000/api/roomsbyarea", {
                 params: {
-                    name: name,
+                    area: area,
                 },
             }
             );
@@ -34,29 +30,30 @@ const TotelRooms = () => {
     };
 
     const handleFilterChange = (e) => {
-        setName(e.target.value);
+        setArea(e.target.value);
     };
 
     const applyFilters = () => {
-        fetchRooms(name);
+        fetchRooms(area);
     };
 
     return (
         <div className="p-6">
-            <h2 className="text-2xl font-semibold mb-4">Available Capacity</h2>
+            <h2 className="text-2xl font-semibold mb-4">Available Rooms</h2>
 
             
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
-                <input type="text" name="name" value={name} onChange={handleFilterChange} placeholder="Hotel Name" />
+                <input type="text" name="area" value={area} onChange={handleFilterChange} placeholder="Address " />
             </div>
 
             <button onClick={applyFilters} className="mb-4">Search Rooms</button>
 
-            <div>Total Capacity: {totalrooms.total_capacity}</div>
+            <div>Total Rooms: {totalrooms.available_rooms_count}</div>
 
         
         </div>
     );
-};
 
-export default TotelRooms;
+}
+
+export default RoomsByArea;

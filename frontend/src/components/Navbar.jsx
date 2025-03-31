@@ -53,7 +53,12 @@ function Navbar() {
               </li>
               <li className='nav-item'>
                 <Link to='/totalrooms' className='nav-links-mobile' onClick={closeMobileMenu} >
-                Total rooms by Hotel
+                Total capacity by Hotel
+                </Link>
+              </li>
+              <li className='nav-item'>
+                <Link to='/roomsbyarea' className='nav-links-mobile' onClick={closeMobileMenu} >
+                Total capacity by Area
                 </Link>
               </li>
             </ul>

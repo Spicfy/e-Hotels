@@ -13,6 +13,7 @@ import Employee from './pages/Employee';
 import Room from './pages/Room';
 import Hotel from './pages/Hotel';
 import TotelRooms from './pages/TotalRooms';
+import RoomsByArea from './pages/RoomsByArea';
 function App() {
   return (
     <Router>
@@ -28,6 +29,7 @@ function App() {
         <Route path='/room' element={<Room/>}/>
         <Route path='/hotel' element={<Hotel/>}/>
         <Route path='/totalrooms' element={<TotelRooms/>}/>
+        <Route path='/roomsbyarea' element={<RoomsByArea/>}/>
       </Routes>
     </Router>
   );
