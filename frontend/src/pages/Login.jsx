@@ -16,9 +16,9 @@ const Login = () => {
         e.preventDefault();
         try {
             const res = await axios.post("http://localhost:5000/api/login", inputs);
-            console.log("✅ Logged in user:", res.data.customer); // ✅ 添加这行
+            console.log("✅ Logged in user:", res.data.customer);
             localStorage.setItem("user", JSON.stringify({
-                id: res.data.customer.customer_id,  // ✅ 确保是 customer_id
+                id: res.data.customer.customer_id,
                 name: res.data.customer.full_name,
                 role: "Customer"
             }));

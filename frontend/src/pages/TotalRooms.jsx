@@ -32,6 +32,9 @@ const TotalRooms = () => {
         }
     };
 
+    // ✅ Calculate total capacity
+    const totalCapacity = roomList.reduce((sum, room) => sum + (room.capacity || 0), 0);
+
     return (
         <div className="room-container">
             <h2 className="page-title">Total Capacity by Hotel 🏨</h2>
@@ -46,6 +49,12 @@ const TotalRooms = () => {
                 <button className="apply-btn" onClick={fetchRooms}>🔍 Search</button>
                 <button className="back-btn" onClick={() => navigate('/')}>⬅ Back to Home</button>
             </div>
+
+            {roomList.length > 0 && (
+                <div className="result-section">
+                    <h3>Total Capacity: <span className="result-count">{totalCapacity} persons</span></h3>
+                </div>
+            )}
 
             <div className="rooms-grid">
                 {roomList.length > 0 ? (

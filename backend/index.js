@@ -63,7 +63,7 @@ function generateToken(user){
     )
 }
 app.post('/api/bookings', async(req, res) => {
-    console.log("📦 Incoming Booking:", req.body);  // ✅ 调试输出
+    console.log("📦 Incoming Booking:", req.body);
 
     const { customer_id, room_id, check_in_date, check_out_date } = req.body;
 
@@ -162,7 +162,7 @@ app.post('/api/customer', async (req, res) => {
     try {
         const { full_name, address, password, id_type } = req.body;
 
-        console.log('收到的请求数据为:', req.body); // 添加此日志
+        console.log('The request data recieved is:', req.body);
 
         if (!full_name || !address || !id_type || !password) {
             return res.status(400).json({ message: "Name, address and id_type are required" });
@@ -176,7 +176,7 @@ app.post('/api/customer', async (req, res) => {
         res.status(201).json({ message: "Customer registered successfully!", customer: newCustomer.rows[0] });
 
     } catch (error) {
-        console.error("Backend error:", error.message);  // 明确输出此错误消息
+        console.error("Backend error:", error.message);  // Output error message
         res.status(500).json({ message: "Server error", error: error.message });
     }
 });
@@ -633,7 +633,7 @@ app.post('/api/bookings', async (req, res) => {
             return res.status(400).json({ message: 'Missing required fields' });
         }
 
-        // 冲突检测：同一个房间的预订或租赁时间不能重叠
+        // Conflict check
 // 1. Check for overlapping bookings
         const checkBookingConflict = await pool.query(`
             SELECT 1 FROM bookings
@@ -658,7 +658,7 @@ app.post('/api/bookings', async (req, res) => {
             });
         }
 
-        // 创建 booking
+        // Create booking
         const result = await pool.query(`
             INSERT INTO bookings (customer_id, room_id, check_in_date, check_out_date, status)
             VALUES ($1, $2, $3, $4, 'confirmed') RETURNING *
@@ -700,7 +700,7 @@ app.post('/api/employee', async (req, res) => {
     try {
         let { full_name, address, password, ssn_sin, hotel_id } = req.body;
 
-        hotel_id = parseInt(hotel_id); // ✅ 强制转换为整数
+        hotel_id = parseInt(hotel_id);
 
         console.log(full_name, address, password, ssn_sin, hotel_id);
 
