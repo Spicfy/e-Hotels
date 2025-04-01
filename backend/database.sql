@@ -84,7 +84,7 @@ CREATE TABLE rentals (
     booking_id INTEGER REFERENCES bookings(booking_id) ON DELETE CASCADE
 );
 
--- ✅ Booking & Rental Conflict Prevention
+--  Booking & Rental Conflict Prevention
 CREATE OR REPLACE FUNCTION prevent_booking_conflicts()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -117,7 +117,7 @@ END IF;
 RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
+-- Trigger that prevent time conflict
 CREATE TRIGGER trigger_prevent_booking_conflicts
     BEFORE INSERT OR UPDATE ON bookings
                          FOR EACH ROW EXECUTE FUNCTION prevent_booking_conflicts();

@@ -445,7 +445,7 @@
   display: inline-block;
   width: 120px;
 }
-
+/* Highlight for admin panel */
 .constant-field {
   background-color: #f9f1c8;
   border: 2px solid #e6b800;
