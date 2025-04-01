@@ -51,12 +51,12 @@ const Employee = () => {
         <div className="admin-container">
             <h2 className="page-title">🧑‍💼 Manage Employees</h2>
             <div className="form-container">
-                <input type="number" name="employee_id" placeholder="Employee ID" onChange={handleChange} />
+                <input className="constant-field" type="number" name="employee_id" placeholder="Employee ID" onChange={handleChange} />
                 <input type="text" name="full_name" placeholder="Full Name" onChange={handleChange} />
                 <input type="password" name="password" placeholder="Password" onChange={handleChange} />
                 <input type="text" name="address" placeholder="Address" onChange={handleChange} />
                 <input type="text" name="ssn_sin" placeholder="SSN/SIN" onChange={handleChange} />
-                <input type="number" name="hotel_id" placeholder="Hotel ID" onChange={handleChange} />
+                <input className="constant-field" type="number" name="hotel_id" placeholder="Hotel ID" onChange={handleChange} />
 
                 <button onClick={handleInsert}>➕ Insert</button>
                 <button onClick={handleUpdate} disabled={!formData.employee_id}>🔄 Update</button>

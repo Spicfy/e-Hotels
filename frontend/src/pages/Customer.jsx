@@ -51,7 +51,7 @@ const Customer = () => {
         <div className="admin-container">
             <h2 className="page-title">👥 Manage Customers</h2>
             <div className="form-container">
-                <input type="number" name="customer_id" placeholder="Customer ID" onChange={handleChange} />
+                <input className="constant-field" type="number" name="customer_id" placeholder="Customer ID" onChange={handleChange} />
                 <input type="text" name="full_name" placeholder="Full Name" onChange={handleChange} />
                 <input type="password" name="password" placeholder="Password" onChange={handleChange} />
                 <input type="text" name="address" placeholder="Address" onChange={handleChange} />

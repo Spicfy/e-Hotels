@@ -53,9 +53,9 @@ const Hotel = () => {
         <div className="admin-container">
             <h2 className="page-title">🏨 Manage Hotels</h2>
             <div className="form-container">
-                <input type="number" name="hotel_id" placeholder="Hotel ID" onChange={handleChange} />
-                <input type="number" name="employee_id" placeholder="Employee ID" onChange={handleChange} />
-                <input type="number" name="chain_id" placeholder="Chain ID" onChange={handleChange} />
+                <input className="constant-field" type="number" name="hotel_id" placeholder="Hotel ID" onChange={handleChange} />
+                <input className="constant-field" type="number" name="employee_id" placeholder="Employee ID" onChange={handleChange} />
+                <input className="constant-field" type="number" name="chain_id" placeholder="Chain ID" onChange={handleChange} />
                 <input type="text" name="name" placeholder="Hotel Name" onChange={handleChange} />
                 <input type="number" name="stars" placeholder="Stars" onChange={handleChange} />
                 <input type="text" name="address" placeholder="Address" onChange={handleChange} />

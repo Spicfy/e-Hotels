@@ -446,4 +446,8 @@
   width: 120px;
 }
 
-
+.constant-field {
+  background-color: #f9f1c8;
+  border: 2px solid #e6b800;
+  font-weight: bold;
+}
