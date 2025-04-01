@@ -99,23 +99,28 @@ app.post('/api/rentals/payments', async(req, res) => {
     }
 });
 app.post('/api/rentals/convert', async (req, res) => {
-    try{
-        const {booking_id, employee_id} = req.body;
+    try {
+        const { booking_id, employee_id } = req.body;
 
-        if(!booking_id || !employee_id){
-            return res.status(400).json({message: 'Booking ID and Employee ID are required'});
-
-
+        if (!booking_id || !employee_id) {
+            return res.status(400).json({ message: 'Missing booking_id or employee_id' });
         }
-        await pool.query('CALL convert_booking_to_rental($1, $2)', [booking_id,employee_id]);
-        res.json({success: true, message: 'Booking converted to rental successfully!' })
-    } catch(error){
-     
-        res.status(500).json({success: false, message: 'Failed to convert booking to rental',
-            error: error.message
+
+        const result = await pool.query('SELECT * FROM convert_booking_to_rental($1, $2)', [
+            booking_id,
+            employee_id,
+        ]);
+
+        res.json({
+            message: 'Booking converted to rental successfully',
+            rental: result.rows[0], // return new rental info
         });
+
+    } catch (error) {
+        console.error('Error during conversion:', error.message);
+        res.status(500).json({ message: 'Failed to convert booking to rental' });
     }
-})
+});
 app.post('/api/rentals/payments', async(req, res) => {
     try{
         const {renting_id, amount} = req.body;
@@ -807,7 +812,7 @@ app.get("/api/totalrooms", async (req, res) => {
 app.use('/uploads', express.static('uploads'));
 
 
-// 当前客户的所有 bookings
+// All Booking for current user
 app.get('/api/my-bookings/:customer_id', async (req, res) => {
     const { customer_id } = req.params;
     try {
@@ -825,7 +830,7 @@ app.get('/api/my-bookings/:customer_id', async (req, res) => {
     }
 });
 
-// 当前客户的所有 rentals
+// All rentals for current user
 app.get('/api/my-rentals/:customer_id', async (req, res) => {
     const { customer_id } = req.params;
     try {
@@ -843,9 +848,64 @@ app.get('/api/my-rentals/:customer_id', async (req, res) => {
     }
 });
 
+app.get('/api/employee-orders/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
 
+        const hotelRes = await pool.query(
+            `SELECT hotel_id FROM employees WHERE employee_id = $1`,
+            [id]
+        );
+        if (hotelRes.rowCount === 0) return res.status(404).json({ message: "Employee not found." });
 
+        const hotel_id = hotelRes.rows[0].hotel_id;
 
+        const bookingsRes = await pool.query(`
+            SELECT booking_id AS id, customer_id, room_id, check_in_date, check_out_date, status
+            FROM bookings WHERE room_id IN (
+                SELECT room_id FROM rooms WHERE hotel_id = $1
+            )
+        `, [hotel_id]);
+
+        const rentalsRes = await pool.query(`
+            SELECT rental_id AS id, customer_id, room_id, check_in_date, check_out_date, 'confirmed' AS status
+            FROM rentals WHERE room_id IN (
+                SELECT room_id FROM rooms WHERE hotel_id = $1
+            )
+        `, [hotel_id]);
+
+        const combined = [
+            ...bookingsRes.rows.map(row => ({ ...row, type: 'booking' })),
+            ...rentalsRes.rows.map(row => ({ ...row, type: 'rental' }))
+        ];
+
+        res.json(combined);
+    } catch (error) {
+        console.error("Error fetching employee orders:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
+app.delete('/api/rental/:id', async (req, res) => {
+    const rentalId = req.params.id;
+
+    try {
+        const result = await pool.query(
+            'DELETE FROM rentals WHERE rental_id = $1 RETURNING *',
+            [rentalId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "Rental not found" });
+        }
+
+        res.json({ message: "Rental deleted successfully", deleted: result.rows[0] });
+
+    } catch (error) {
+        console.error('Error deleting rental:', error.message);
+        res.status(500).json({ message: 'Failed to delete rental' });
+    }
+});
 
 
 app.listen(5000, () => {

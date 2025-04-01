@@ -16,13 +16,21 @@ const Home = () => {
                     <a className="menu-link" href="/rooms">View Available Rooms 🔍</a>
                     <a className="menu-link" href="/sign-up">Customer Sign up 👤</a>
                     <a className="menu-link" href="/employee-sign-up">Employee Sign up 🛎️</a>
-                    <a className="menu-link" href="/admin">Admin Page 🛠️</a>
+                    {/* Logged-in Employee Only */}
+                    {user && user.role === "Employee" && (
+                        <a className="menu-link" href="/manage-bookings">Admin Page 🛠️</a>
+                    )}
                     <a className="menu-link" href="/totalrooms">Total Capacity by Hotel 📈</a>
                     <a className="menu-link" href="/roomsbyarea">Total Capacity by Area 🌍</a>
 
-                    {/* ✅ Only show when logged in */}
+                    {/* Logged-in Customer Only */}
                     {user && user.role === "Customer" && (
                         <a className="menu-link" href="/mystatus">📋 My Booking Status</a>
+                    )}
+
+                    {/* Logged-in Employee Only */}
+                    {user && user.role === "Employee" && (
+                        <a className="menu-link" href="/manage-bookings">🧾 Manage Orders</a>
                     )}
                 </div>
             </header>

@@ -1,63 +1,90 @@
-import React, {useState, useEffect} from 'react';
+// src/pages/BookingManagement.jsx
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
-function BookingManagement({employeeId}){
-    const [bookings, setBookings] = useState([]);
+const BookingManagement = () => {
+    const [orders, setOrders] = useState([]);
     const [selectedBookingId, setSelectedBookingId] = useState(null);
     const [message, setMessage] = useState('');
+    const navigate = useNavigate();
 
-    useEffect(()=> {
-        fetchBookings();
-    }, []);
+    const employee = JSON.parse(localStorage.getItem('user'));
+    const employeeId = employee?.id;
 
-    const fetchBookings = async () => {
-        try{
-            const response = await axios.get('http://localhost:3000/api/bookings');
-            setBookings(response.data);
-        }catch(error){
-            setMessage(`Error fetching bookings: ${error.response?.data?.message || error.message}`);
-        }
-    }
-
-    const handleConvertBooking = async () => {
-        if(!selectedBookingId){
-            setMessage('Please select a booking to convert.');
+    useEffect(() => {
+        if (!employee || employee.role !== 'Employee') {
+            alert('Only logged-in employees can access this page.');
+            navigate('/');
             return;
         }
-        try{
-            const response = await axios.post('http://localhost:3000/api/rentals/convert', {
-                booking_id: selectedBookingId,
-                employee_id: employeeId
-            });
-            setMessage(response.data.message);
-            fetchBookings(); //Refresh the booking list after conversion
-        }catch(error){
-            setMessage(`Error converting booking: ${error.response?.data?.message || error.message}`);
+
+        fetchOrders();
+    }, []);
+
+    const fetchOrders = async () => {
+        try {
+            const res = await axios.get(`http://localhost:5000/api/employee-orders/${employeeId}`);
+            setOrders(res.data);
+        } catch (err) {
+            setMessage(`Error fetching orders: ${err.response?.data?.message || err.message}`);
         }
     };
 
-    return(
-        <div>
-            <h2>Booking Management</h2>
-            {message && <p>{message} </p>}
+    const handleConvertBooking = async () => {
+        if (!selectedBookingId) {
+            setMessage("Please select a booking to convert.");
+            return;
+        }
+
+        try {
+            const res = await axios.post('http://localhost:5000/api/rentals/convert', {
+                booking_id: selectedBookingId,
+                employee_id: employeeId
+            });
+            setMessage(res.data.message || "Booking converted!");
+            fetchOrders();
+        } catch (err) {
+            setMessage(`Error converting: ${err.response?.data?.message || err.message}`);
+        }
+    };
+
+    const handleDelete = async (id, type = 'booking') => {
+        try {
+            const endpoint = type === 'booking'
+                ? `http://localhost:5000/api/bookings/${id}`
+                : `http://localhost:5000/api/rental/${id}`;
+
+            await axios.delete(endpoint);
+            setMessage("Successfully deleted.");
+            fetchOrders(); // refresh
+        } catch (err) {
+            setMessage("Error deleting: " + err.response?.data?.message || err.message);
+        }
+    };
+
+    return (
+        <div className="admin-container">
+            <h2>🏨 Manage Bookings & Rentals</h2>
+            {message && <p className="result-msg">{message}</p>}
             <ul>
-                {bookings.map((booking) => (
-                    <li key={booking.booking_id}>
-                        Booking ID: {booking.booking_id}, Customer ID:
-                        {booking.customer_id}, Room ID: {bookingroom_id}, Status: {booking.status}
-                        <input type="radio"
-                        name="bookingSelection"
-                        value={booking.booking_id}
-                        onChange={(e) => 
-                            setSelectedBookingId(parseInt(e.target.value))
-                        }
-                        />
+                {orders.map(order => (
+                    <li key={`${order.type}-${order.id}`}>
+                        <strong>{order.type}</strong> | ID: {order.id} | Room: {order.room_id} | Customer: {order.customer_id} |
+                        {order.check_in_date} → {order.check_out_date} | Status: {order.status}
+                        {order.type === 'booking' && (
+                            <>
+                                <input type="radio" name="selectedBooking" value={order.id} onChange={() => setSelectedBookingId(order.id)} />
+                                <button onClick={() => handleConvertBooking()}>Convert to Rental</button>
+                            </>
+                        )}
+                        <button onClick={() => handleDelete(order.id, order.type)}>🗑 Delete</button>
                     </li>
                 ))}
             </ul>
-            <button onClick={handleConvertBooking}>Convert Selected Booking to Rental</button>
+            <button className="back-btn" onClick={() => navigate('/')}>⬅ Back to Home</button>
         </div>
-    )
+    );
+};
 
-}
 export default BookingManagement;
